@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +40,14 @@ import {
   LogOut,
   RefreshCw,
   Shield,
+  Trash2,
   Upload,
   Users,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { useActor } from "../hooks/useActor";
 import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
 import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
@@ -319,6 +332,9 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [loginError, setLoginError] = useState("");
   const [previewEntry, setPreviewEntry] = useState<PreviewEntry | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  const { actor } = useActor();
 
   const {
     data: uploads,
@@ -351,6 +367,22 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       URL.revokeObjectURL(objectUrl);
     } finally {
       setDownloadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(blobId);
+        return next;
+      });
+    }
+  };
+
+  const handleDelete = async (blobId: string) => {
+    setDeletingIds((prev) => new Set(prev).add(blobId));
+    try {
+      if (actor) {
+        await (actor as any).deleteUpload(blobId);
+        await refetch();
+      }
+    } finally {
+      setDeletingIds((prev) => {
         const next = new Set(prev);
         next.delete(blobId);
         return next;
@@ -852,6 +884,62 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                     />
                                   )}
                                 </Button>
+
+                                {/* Delete */}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={deletingIds.has(entry.blobId)}
+                                      className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-red-400/50"
+                                      title="Delete"
+                                      data-ocid={`admin.uploads.delete_button.${idx + 1}`}
+                                    >
+                                      {deletingIds.has(entry.blobId) ? (
+                                        <Loader2
+                                          className="w-3.5 h-3.5 animate-spin"
+                                          style={{
+                                            color:
+                                              "oklch(var(--muted-foreground))",
+                                          }}
+                                        />
+                                      ) : (
+                                        <Trash2
+                                          className="w-3.5 h-3.5"
+                                          style={{
+                                            color: "oklch(0.55 0.18 25)",
+                                          }}
+                                        />
+                                      )}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent data-ocid="admin.uploads.delete.dialog">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete this upload?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently remove the file
+                                        and cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel data-ocid="admin.uploads.delete.cancel_button">
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleDelete(entry.blobId)
+                                        }
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        data-ocid="admin.uploads.delete.confirm_button"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </TableCell>
                           </motion.tr>

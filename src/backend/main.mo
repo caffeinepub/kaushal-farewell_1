@@ -86,6 +86,12 @@ actor {
     uploadEntries := newEntries;
   };
 
+  public shared func deleteUpload(blobId : Text) : async () {
+    uploadEntries := uploadEntries.filter(func(e : UploadEntry) : Bool {
+      e.blobId != blobId
+    });
+  };
+
   public query func getAllUploads() : async [UploadEntry] {
     uploadEntries;
   };

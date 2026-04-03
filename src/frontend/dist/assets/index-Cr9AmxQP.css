@@ -2230,6 +2230,10 @@ video {
   border-color: oklch(var(--primary) / 0.5);
 }
 
+.hover\:border-red-400\/50:hover {
+  border-color: rgb(248 113 113 / 0.5);
+}
+
 .hover\:bg-accent:hover {
   --tw-bg-opacity: 1;
   background-color: oklch(var(--accent) / var(--tw-bg-opacity, 1));
