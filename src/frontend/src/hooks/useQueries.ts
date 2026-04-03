@@ -16,26 +16,26 @@ export function useIsCallerAdmin() {
 }
 
 export function useGetAllUploads() {
-  const { actor, isFetching } = useActor();
+  const { actor } = useActor();
   return useQuery<UploadEntry[]>({
     queryKey: ["allUploads"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllUploads();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor,
   });
 }
 
 export function useGetStats() {
-  const { actor, isFetching } = useActor();
+  const { actor } = useActor();
   return useQuery<[bigint, bigint]>({
     queryKey: ["stats"],
     queryFn: async () => {
       if (!actor) return [0n, 0n];
       return actor.getStats();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor,
   });
 }
 

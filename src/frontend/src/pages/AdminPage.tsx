@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -9,15 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   File,
   FileImage,
   FileVideo,
   Heart,
-  Lock,
-  LogIn,
   LogOut,
   RefreshCw,
   Shield,
@@ -25,13 +24,12 @@ import {
   Users,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 import { ExternalBlob } from "../backend";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import {
-  useGetAllUploads,
-  useGetStats,
-  useIsCallerAdmin,
-} from "../hooks/useQueries";
+import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
+
+const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
+const ADMIN_PASSWORD = "Kaushal@123";
 
 interface AdminPageProps {
   onNavigateHome: () => void;
@@ -65,57 +63,12 @@ function getFileTypeIcon(fileName: string) {
   );
 }
 
-function LoginButton() {
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
-  const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === "logging-in";
-
-  const handleAuth = async () => {
-    if (isAuthenticated) {
-      await clear();
-      queryClient.clear();
-    } else {
-      try {
-        await login();
-      } catch (error: any) {
-        console.error("Login error:", error);
-        if (error?.message === "User is already authenticated") {
-          await clear();
-          setTimeout(() => login(), 300);
-        }
-      }
-    }
-  };
-
-  return (
-    <Button
-      onClick={handleAuth}
-      disabled={isLoggingIn}
-      className="rounded-full font-semibold px-6 text-white"
-      style={{
-        background: isAuthenticated
-          ? "oklch(0.55 0.06 40)"
-          : "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
-      }}
-      data-ocid="admin.auth.button"
-    >
-      {isLoggingIn ? (
-        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-      ) : isAuthenticated ? (
-        <LogOut className="w-4 h-4 mr-2" />
-      ) : (
-        <LogIn className="w-4 h-4 mr-2" />
-      )}
-      {isLoggingIn ? "Signing in…" : isAuthenticated ? "Sign Out" : "Sign In"}
-    </Button>
-  );
-}
-
 export default function AdminPage({ onNavigateHome }: AdminPageProps) {
-  const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
-  const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   const {
     data: uploads,
     isLoading: uploadsLoading,
@@ -129,6 +82,23 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const handleViewFile = (blobId: string) => {
     const blob = ExternalBlob.fromURL(blobId);
     window.open(blob.getDirectURL(), "_blank");
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      setIsLoggedIn(true);
+      setLoginError("");
+    } else {
+      setLoginError("Invalid email or password.");
+    }
+  };
+
+  const handleSignOut = () => {
+    setIsLoggedIn(false);
+    setEmail("");
+    setPassword("");
+    setLoginError("");
   };
 
   return (
@@ -176,85 +146,117 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 </span>
               </div>
             </div>
-            <LoginButton />
+            {isLoggedIn && (
+              <Button
+                onClick={handleSignOut}
+                className="rounded-full font-semibold px-6 text-white"
+                style={{ background: "oklch(0.55 0.06 40)" }}
+                data-ocid="admin.signout.button"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {!isAuthenticated ? (
+        {!isLoggedIn ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
+            className="flex flex-col items-center justify-center py-16"
             data-ocid="admin.login.panel"
           >
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-              style={{ backgroundColor: "oklch(1 0 0 / 0.7)" }}
+              className="w-full max-w-sm rounded-2xl shadow-card p-8"
+              style={{ backgroundColor: "oklch(1 0 0)" }}
             >
-              <Lock
-                className="w-8 h-8"
-                style={{ color: "oklch(var(--coral-primary))" }}
-              />
+              {/* Shield icon */}
+              <div className="flex justify-center mb-6">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                  }}
+                >
+                  <Shield className="w-7 h-7 text-white" />
+                </div>
+              </div>
+
+              <h2
+                className="font-display font-bold text-2xl text-center mb-6"
+                style={{ color: "oklch(var(--hero-brown))" }}
+              >
+                Admin Login
+              </h2>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="admin-email"
+                    className="text-sm font-medium"
+                    style={{ color: "oklch(var(--hero-brown))" }}
+                  >
+                    Email
+                  </Label>
+                  <Input
+                    id="admin-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                    required
+                    className="rounded-xl border-border/60 focus:border-coral/60"
+                    data-ocid="admin.login.input"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="admin-password"
+                    className="text-sm font-medium"
+                    style={{ color: "oklch(var(--hero-brown))" }}
+                  >
+                    Password
+                  </Label>
+                  <Input
+                    id="admin-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="rounded-xl border-border/60 focus:border-coral/60"
+                    data-ocid="admin.login.password"
+                  />
+                </div>
+
+                {loginError && (
+                  <p
+                    className="text-sm text-center"
+                    style={{ color: "oklch(0.5 0.18 25)" }}
+                    data-ocid="admin.login.error_state"
+                  >
+                    {loginError}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl font-semibold text-white mt-2"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                  }}
+                  data-ocid="admin.login.submit_button"
+                >
+                  Sign In
+                </Button>
+              </form>
             </div>
-            <h2
-              className="font-display font-bold text-3xl mb-3"
-              style={{ color: "oklch(var(--hero-brown))" }}
-            >
-              Admin Access Required
-            </h2>
-            <p
-              className="text-sm max-w-sm mb-8"
-              style={{ color: "oklch(0.45 0.06 40)" }}
-            >
-              Sign in with Internet Identity to access the admin panel and view
-              all uploaded memories.
-            </p>
-            <LoginButton />
-          </motion.div>
-        ) : adminLoading ? (
-          <div
-            className="py-16 flex flex-col items-center gap-4"
-            data-ocid="admin.loading_state"
-          >
-            <RefreshCw
-              className="w-8 h-8 animate-spin"
-              style={{ color: "oklch(var(--coral-primary))" }}
-            />
-            <p className="text-sm" style={{ color: "oklch(0.45 0.06 40)" }}>
-              Checking permissions…
-            </p>
-          </div>
-        ) : !isAdmin ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
-            data-ocid="admin.access_denied.panel"
-          >
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-              style={{ backgroundColor: "oklch(0.95 0.04 25)" }}
-            >
-              <Shield
-                className="w-8 h-8"
-                style={{ color: "oklch(0.55 0.15 25)" }}
-              />
-            </div>
-            <h2
-              className="font-display font-bold text-3xl mb-3"
-              style={{ color: "oklch(var(--hero-brown))" }}
-            >
-              Access Denied
-            </h2>
-            <p
-              className="text-sm max-w-sm"
-              style={{ color: "oklch(0.45 0.06 40)" }}
-            >
-              Your account does not have admin privileges. Please contact the
-              site administrator.
-            </p>
           </motion.div>
         ) : (
           <motion.div

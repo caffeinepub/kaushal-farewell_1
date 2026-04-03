@@ -17748,6 +17748,89 @@ function Button({
     }
   );
 }
+function Input({ className, type, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "input",
+    {
+      type,
+      "data-slot": "input",
+      className: cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className
+      ),
+      ...props
+    }
+  );
+}
+var NODES = [
+  "a",
+  "button",
+  "div",
+  "form",
+  "h2",
+  "h3",
+  "img",
+  "input",
+  "label",
+  "li",
+  "nav",
+  "ol",
+  "p",
+  "select",
+  "span",
+  "svg",
+  "ul"
+];
+var Primitive = NODES.reduce((primitive, node) => {
+  const Slot2 = /* @__PURE__ */ createSlot(`Primitive.${node}`);
+  const Node = reactExports.forwardRef((props, forwardedRef) => {
+    const { asChild, ...primitiveProps } = props;
+    const Comp = asChild ? Slot2 : node;
+    if (typeof window !== "undefined") {
+      window[Symbol.for("radix-ui")] = true;
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Comp, { ...primitiveProps, ref: forwardedRef });
+  });
+  Node.displayName = `Primitive.${node}`;
+  return { ...primitive, [node]: Node };
+}, {});
+var NAME = "Label";
+var Label$1 = reactExports.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Primitive.label,
+    {
+      ...props,
+      ref: forwardedRef,
+      onMouseDown: (event) => {
+        var _a3;
+        const target = event.target;
+        if (target.closest("button, input, select, textarea")) return;
+        (_a3 = props.onMouseDown) == null ? void 0 : _a3.call(props, event);
+        if (!event.defaultPrevented && event.detail > 1) event.preventDefault();
+      }
+    }
+  );
+});
+Label$1.displayName = NAME;
+var Root$1 = Label$1;
+function Label({
+  className,
+  ...props
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Root$1,
+    {
+      "data-slot": "label",
+      className: cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      ),
+      ...props
+    }
+  );
+}
 function Skeleton({ className, ...props }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
@@ -17939,18 +18022,18 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$m = [
+const __iconNode$k = [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
 ];
-const ArrowLeft = createLucideIcon("arrow-left", __iconNode$m);
+const ArrowLeft = createLucideIcon("arrow-left", __iconNode$k);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$l = [
+const __iconNode$j = [
   [
     "path",
     {
@@ -17960,38 +18043,15 @@ const __iconNode$l = [
   ],
   ["circle", { cx: "12", cy: "13", r: "3", key: "1vg3eu" }]
 ];
-const Camera = createLucideIcon("camera", __iconNode$l);
+const Camera = createLucideIcon("camera", __iconNode$j);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$k = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
-const ChevronRight = createLucideIcon("chevron-right", __iconNode$k);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$j = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-];
-const CircleCheck = createLucideIcon("circle-check", __iconNode$j);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$i = [
-  ["path", { d: "M12 13v8", key: "1l5pq0" }],
-  ["path", { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", key: "1pljnt" }],
-  ["path", { d: "m8 17 4-4 4 4", key: "1quai1" }]
-];
-const CloudUpload = createLucideIcon("cloud-upload", __iconNode$i);
+const __iconNode$i = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+const ChevronRight = createLucideIcon("chevron-right", __iconNode$i);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -17999,12 +18059,10 @@ const CloudUpload = createLucideIcon("cloud-upload", __iconNode$i);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$h = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["circle", { cx: "10", cy: "12", r: "2", key: "737tya" }],
-  ["path", { d: "m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22", key: "wt3hpn" }]
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ];
-const FileImage = createLucideIcon("file-image", __iconNode$h);
+const CircleCheck = createLucideIcon("circle-check", __iconNode$h);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -18012,11 +18070,11 @@ const FileImage = createLucideIcon("file-image", __iconNode$h);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$g = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "m10 11 5 3-5 3v-6Z", key: "7ntvm4" }]
+  ["path", { d: "M12 13v8", key: "1l5pq0" }],
+  ["path", { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", key: "1pljnt" }],
+  ["path", { d: "m8 17 4-4 4 4", key: "1quai1" }]
 ];
-const FileVideo = createLucideIcon("file-video", __iconNode$g);
+const CloudUpload = createLucideIcon("cloud-upload", __iconNode$g);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -18025,9 +18083,11 @@ const FileVideo = createLucideIcon("file-video", __iconNode$g);
  */
 const __iconNode$f = [
   ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }]
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["circle", { cx: "10", cy: "12", r: "2", key: "737tya" }],
+  ["path", { d: "m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22", key: "wt3hpn" }]
 ];
-const File = createLucideIcon("file", __iconNode$f);
+const FileImage = createLucideIcon("file-image", __iconNode$f);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -18035,6 +18095,29 @@ const File = createLucideIcon("file", __iconNode$f);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$e = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "m10 11 5 3-5 3v-6Z", key: "7ntvm4" }]
+];
+const FileVideo = createLucideIcon("file-video", __iconNode$e);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$d = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }]
+];
+const File = createLucideIcon("file", __iconNode$d);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$c = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -18044,14 +18127,14 @@ const __iconNode$e = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("film", __iconNode$e);
+const Film = createLucideIcon("film", __iconNode$c);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$d = [
+const __iconNode$b = [
   [
     "path",
     {
@@ -18060,39 +18143,19 @@ const __iconNode$d = [
     }
   ]
 ];
-const Heart = createLucideIcon("heart", __iconNode$d);
+const Heart = createLucideIcon("heart", __iconNode$b);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$c = [
+const __iconNode$a = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
   ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
   ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
 ];
-const Image = createLucideIcon("image", __iconNode$c);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$b = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 16v-4", key: "1dtifu" }],
-  ["path", { d: "M12 8h.01", key: "e9boi3" }]
-];
-const Info = createLucideIcon("info", __iconNode$b);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$a = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("loader-circle", __iconNode$a);
+const Image = createLucideIcon("image", __iconNode$a);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -18100,22 +18163,19 @@ const LoaderCircle = createLucideIcon("loader-circle", __iconNode$a);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$9 = [
-  ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
-  ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 16v-4", key: "1dtifu" }],
+  ["path", { d: "M12 8h.01", key: "e9boi3" }]
 ];
-const Lock = createLucideIcon("lock", __iconNode$9);
+const Info = createLucideIcon("info", __iconNode$9);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$8 = [
-  ["path", { d: "m10 17 5-5-5-5", key: "1bsop3" }],
-  ["path", { d: "M15 12H3", key: "6jk70r" }],
-  ["path", { d: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4", key: "u53s6r" }]
-];
-const LogIn = createLucideIcon("log-in", __iconNode$8);
+const __iconNode$8 = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("loader-circle", __iconNode$8);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -37210,6 +37270,611 @@ function createActor(canisterId, _uploadFile, _downloadFile, options = {}) {
   });
   return new Backend(actor, _uploadFile, _downloadFile, options.processError);
 }
+const MAXIMUM_CONCURRENT_UPLOADS = 10;
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1e3;
+const MAX_DELAY_MS = 3e4;
+const GATEWAY_VERSION = "v1";
+const HASH_ALGORITHM = "SHA-256";
+const SHA256_PREFIX = "sha256:";
+const DOMAIN_SEPARATOR_FOR_CHUNKS = new TextEncoder().encode("icfs-chunk/");
+const DOMAIN_SEPARATOR_FOR_METADATA = new TextEncoder().encode(
+  "icfs-metadata/"
+);
+const DOMAIN_SEPARATOR_FOR_NODES = new TextEncoder().encode("ynode/");
+async function withRetry(operation) {
+  let lastError;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const shouldRetry = isRetriableError(error);
+      if (attempt === MAX_RETRIES || !shouldRetry) {
+        if (!shouldRetry && attempt < MAX_RETRIES) {
+          console.warn(
+            `Non-retriable error encountered: ${lastError.message}. Not retrying.`
+          );
+        }
+        throw error;
+      }
+      const delay2 = Math.min(
+        BASE_DELAY_MS * 2 ** attempt + Math.random() * 1e3,
+        MAX_DELAY_MS
+      );
+      console.warn(
+        `Request failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}): ${lastError.message}. Retrying in ${Math.round(delay2)}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay2));
+    }
+  }
+  throw lastError || new Error("Unknown error occurred during retry attempts");
+}
+function isRetriableError(error) {
+  var _a3, _b3;
+  const errorMessage = ((_a3 = error == null ? void 0 : error.message) == null ? void 0 : _a3.toLowerCase()) || "";
+  if ((_b3 = error == null ? void 0 : error.response) == null ? void 0 : _b3.status) {
+    const status = error.response.status;
+    if (status === 408 || status === 429) return true;
+    if (status >= 400 && status < 500) return false;
+    if (status >= 500) return true;
+  }
+  if (errorMessage.includes("ssl") || errorMessage.includes("tls") || errorMessage.includes("network error") || errorMessage.includes("connection") || errorMessage.includes("timeout") || errorMessage.includes("fetch")) {
+    return true;
+  }
+  if (errorMessage.includes("validation") || errorMessage.includes("invalid") || errorMessage.includes("malformed") || errorMessage.includes("unauthorized") || errorMessage.includes("forbidden") || errorMessage.includes("not found")) {
+    return false;
+  }
+  return true;
+}
+function validateHashFormat(hash, context) {
+  if (!hash) {
+    throw new Error(`${context}: Hash cannot be empty`);
+  }
+  if (!hash.startsWith(SHA256_PREFIX)) {
+    throw new Error(
+      `${context}: Invalid hash format. Expected format: ${SHA256_PREFIX}<64-char-hex>, got: ${hash}`
+    );
+  }
+  const hexPart = hash.substring(SHA256_PREFIX.length);
+  if (hexPart.length !== 64) {
+    throw new Error(
+      `${context}: Invalid hash format. Expected 64 hex characters after ${SHA256_PREFIX}, got ${hexPart.length} characters: ${hash}`
+    );
+  }
+  if (!/^[0-9a-f]{64}$/i.test(hexPart)) {
+    throw new Error(
+      `${context}: Invalid hash format. Hash must contain only hex characters (0-9, a-f), got: ${hash}`
+    );
+  }
+}
+class YHash {
+  constructor(bytes) {
+    __publicField(this, "bytes");
+    if (bytes.length !== 32) {
+      throw new Error(`YHash must be exactly 32 bytes, got ${bytes.length}`);
+    }
+    this.bytes = new Uint8Array(bytes);
+  }
+  static async fromNodes(left, right) {
+    let leftBytes = left instanceof YHash ? left.bytes : new TextEncoder().encode("UNBALANCED");
+    let rightBytes = right instanceof YHash ? right.bytes : new TextEncoder().encode("UNBALANCED");
+    const combined = new Uint8Array(
+      DOMAIN_SEPARATOR_FOR_NODES.length + leftBytes.length + rightBytes.length
+    );
+    const arrays = [DOMAIN_SEPARATOR_FOR_NODES, leftBytes, rightBytes];
+    let offset = 0;
+    for (const data of arrays) {
+      combined.set(data, offset);
+      offset += data.length;
+    }
+    const hashBuffer = await crypto.subtle.digest(HASH_ALGORITHM, combined);
+    return new YHash(new Uint8Array(hashBuffer));
+  }
+  static async fromChunk(data) {
+    return YHash.fromBytes(DOMAIN_SEPARATOR_FOR_CHUNKS, data);
+  }
+  static async fromHeaders(headers) {
+    const headerLines = [];
+    for (const [key, value] of Object.entries(headers)) {
+      headerLines.push(`${key.trim()}: ${value.trim()}
+`);
+    }
+    headerLines.sort();
+    const hash = await YHash.fromBytes(
+      DOMAIN_SEPARATOR_FOR_METADATA,
+      new TextEncoder().encode(headerLines.join(""))
+    );
+    return hash;
+  }
+  static async fromBytes(domainSeparator, data) {
+    const combined = new Uint8Array(domainSeparator.length + data.length);
+    combined.set(domainSeparator);
+    combined.set(data, domainSeparator.length);
+    const hashBuffer = await crypto.subtle.digest(HASH_ALGORITHM, combined);
+    return new YHash(new Uint8Array(hashBuffer));
+  }
+  static fromHex(hexString) {
+    const bytes = new Uint8Array(
+      hexString.match(/.{1,2}/g).map((byte) => Number.parseInt(byte, 16))
+    );
+    return new YHash(bytes);
+  }
+  toShaString() {
+    return `${SHA256_PREFIX}${this.toHex()}`;
+  }
+  toString() {
+    throw new Error("toString is not supported for YHash");
+  }
+  toHex() {
+    return Array.from(this.bytes).map((b2) => b2.toString(16).padStart(2, "0")).join("");
+  }
+}
+function nodeToJSON(node) {
+  return {
+    hash: node.hash.toShaString(),
+    left: node.left ? nodeToJSON(node.left) : null,
+    right: node.right ? nodeToJSON(node.right) : null
+  };
+}
+class BlobHashTree {
+  constructor(chunk_hashes, tree, headers = null) {
+    __publicField(this, "tree_type");
+    __publicField(this, "chunk_hashes");
+    __publicField(this, "tree");
+    __publicField(this, "headers");
+    this.tree_type = "DSBMTWH";
+    this.chunk_hashes = chunk_hashes;
+    this.tree = tree;
+    if (headers == null) {
+      this.headers = [];
+    } else if (Array.isArray(headers)) {
+      this.headers = headers;
+    } else {
+      this.headers = Object.entries(headers).map(
+        ([key, value]) => `${key.trim()}: ${value.trim()}`
+      );
+    }
+    this.headers.sort();
+  }
+  static async build(chunkHashes, headers = {}) {
+    if (chunkHashes.length === 0) {
+      const hex2 = "8b8e620f084e48da0be2287fd12c5aaa4dbe14b468fd2e360f48d741fe7628a0";
+      const bytes = new TextEncoder().encode(hex2);
+      chunkHashes.push(new YHash(bytes));
+    }
+    let level = chunkHashes.map((hash) => ({
+      hash,
+      left: null,
+      right: null
+    }));
+    while (level.length > 1) {
+      const nextLevel = [];
+      for (let i = 0; i < level.length; i += 2) {
+        const left = level[i];
+        const right = level[i + 1] || null;
+        const parentHash = await YHash.fromNodes(
+          left.hash,
+          right ? right.hash : null
+        );
+        nextLevel.push({
+          hash: parentHash,
+          left,
+          right
+        });
+      }
+      level = nextLevel;
+    }
+    const chunksRoot = level[0];
+    if (headers && Object.keys(headers).length > 0) {
+      const metadataRootHash = await YHash.fromHeaders(headers);
+      const metadataRoot = {
+        hash: metadataRootHash,
+        left: null,
+        right: null
+      };
+      const combinedRootHash = await YHash.fromNodes(
+        chunksRoot.hash,
+        metadataRoot.hash
+      );
+      const combinedRoot = {
+        hash: combinedRootHash,
+        left: chunksRoot,
+        right: metadataRoot
+      };
+      return new BlobHashTree(chunkHashes, combinedRoot, headers);
+    }
+    return new BlobHashTree(chunkHashes, chunksRoot, headers);
+  }
+  toJSON() {
+    return {
+      tree_type: this.tree_type,
+      chunk_hashes: this.chunk_hashes.map((h2) => h2.toShaString()),
+      tree: nodeToJSON(this.tree),
+      headers: this.headers
+    };
+  }
+}
+class StorageGatewayClient {
+  constructor(storageGatewayUrl) {
+    this.storageGatewayUrl = storageGatewayUrl;
+  }
+  getStorageGatewayUrl() {
+    return this.storageGatewayUrl;
+  }
+  async uploadChunk(params) {
+    const blobHashString = params.blobRootHash.toShaString();
+    const chunkHashString = params.chunkHash.toShaString();
+    validateHashFormat(
+      blobHashString,
+      `uploadChunk[${params.chunkIndex}] blob_hash`
+    );
+    validateHashFormat(
+      chunkHashString,
+      `uploadChunk[${params.chunkIndex}] chunk_hash`
+    );
+    return await withRetry(async () => {
+      const queryParams = new URLSearchParams({
+        owner_id: params.owner,
+        blob_hash: blobHashString,
+        chunk_hash: chunkHashString,
+        chunk_index: params.chunkIndex.toString(),
+        bucket_name: params.bucketName,
+        project_id: params.projectId
+      });
+      const url = `${this.storageGatewayUrl}/${GATEWAY_VERSION}/chunk/?${queryParams.toString()}`;
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "X-Caffeine-Project-ID": params.projectId
+        },
+        body: params.chunkData
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(
+          `Failed to upload chunk ${params.chunkIndex}: ${response.status} ${response.statusText} - ${errorText}`
+        );
+        error.response = { status: response.status };
+        throw error;
+      }
+      const result = await response.json();
+      return {
+        isComplete: result.status === "blob_complete"
+      };
+    });
+  }
+  async uploadBlobTree(blobHashTree, bucketName, numBlobBytes, owner, projectId, certificateBytes) {
+    const treeJSON = blobHashTree.toJSON();
+    validateHashFormat(treeJSON.tree.hash, "uploadBlobTree root hash");
+    treeJSON.chunk_hashes.forEach((hash, index2) => {
+      validateHashFormat(hash, `uploadBlobTree chunk_hash[${index2}]`);
+    });
+    return await withRetry(async () => {
+      const url = `${this.storageGatewayUrl}/${GATEWAY_VERSION}/blob-tree/`;
+      const requestBody = {
+        blob_tree: treeJSON,
+        bucket_name: bucketName,
+        num_blob_bytes: numBlobBytes,
+        owner,
+        project_id: projectId,
+        headers: blobHashTree.headers,
+        auth: {
+          OwnerEgressSignature: Array.from(certificateBytes)
+        }
+      };
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Caffeine-Project-ID": projectId
+        },
+        body: JSON.stringify(requestBody)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(
+          `Failed to upload blob tree: ${response.status} ${response.statusText} - ${errorText}`
+        );
+        error.response = { status: response.status };
+        throw error;
+      }
+    });
+  }
+}
+class StorageClient {
+  constructor(bucket, storageGatewayUrl, backendCanisterId, projectId, agent) {
+    __publicField(this, "storageGatewayClient");
+    this.bucket = bucket;
+    this.backendCanisterId = backendCanisterId;
+    this.projectId = projectId;
+    this.agent = agent;
+    this.storageGatewayClient = new StorageGatewayClient(storageGatewayUrl);
+  }
+  async getCertificate(hash) {
+    const args = encode$1([Text], [hash]);
+    const result = await this.agent.call(this.backendCanisterId, {
+      methodName: "_caffeineStorageCreateCertificate",
+      arg: args
+    });
+    const respone = result.response.body;
+    if (isV3ResponseBody(respone)) {
+      console.log("Certificate:", respone.certificate);
+      return respone.certificate;
+    }
+    throw new Error("Expected v3 response body");
+  }
+  async putFile(blobBytes, onProgress) {
+    const httpHeaders = {
+      "Content-Type": "application/json"
+    };
+    const file = new Blob([new Uint8Array(blobBytes)], {
+      type: "application/octet-stream"
+    });
+    const fileHeaders = {
+      "Content-Type": "application/octet-stream",
+      "Content-Length": file.size.toString()
+    };
+    const { chunks, chunkHashes, blobHashTree } = await this.processFileForUpload(file, fileHeaders);
+    const blobRootHash = blobHashTree.tree.hash;
+    const hashString2 = blobRootHash.toShaString();
+    const certificateBytes = await this.getCertificate(hashString2);
+    await this.storageGatewayClient.uploadBlobTree(
+      blobHashTree,
+      this.bucket,
+      file.size,
+      this.backendCanisterId,
+      this.projectId,
+      certificateBytes
+    );
+    await this.parallelUpload(
+      chunks,
+      chunkHashes,
+      blobRootHash,
+      httpHeaders,
+      onProgress
+    );
+    return { hash: hashString2 };
+  }
+  async getDirectURL(hash) {
+    if (!hash) {
+      throw new Error("Hash must not be empty");
+    }
+    validateHashFormat(hash, `getDirectURL for path '${hash}'`);
+    return `${this.storageGatewayClient.getStorageGatewayUrl()}/${GATEWAY_VERSION}/blob/?blob_hash=${encodeURIComponent(hash)}&owner_id=${encodeURIComponent(this.backendCanisterId)}&project_id=${encodeURIComponent(this.projectId)}`;
+  }
+  async processFileForUpload(file, headers) {
+    const chunks = this.createFileChunks(file);
+    const chunkHashes = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkData = new Uint8Array(await chunks[i].arrayBuffer());
+      const hash = await YHash.fromChunk(chunkData);
+      chunkHashes.push(hash);
+    }
+    const blobHashTree = await BlobHashTree.build(chunkHashes, headers);
+    return { chunks, chunkHashes, blobHashTree };
+  }
+  async parallelUpload(chunks, chunkHashes, blobRootHash, httpHeaders, onProgress) {
+    let completedChunks = 0;
+    const uploadSingleChunk = async (index2) => {
+      const chunkData = new Uint8Array(await chunks[index2].arrayBuffer());
+      const chunkHash = chunkHashes[index2];
+      await this.storageGatewayClient.uploadChunk({
+        blobRootHash,
+        chunkHash,
+        chunkIndex: index2,
+        chunkData,
+        bucketName: this.bucket,
+        owner: this.backendCanisterId,
+        projectId: this.projectId,
+        httpHeaders
+      });
+      const currentCompleted = ++completedChunks;
+      if (onProgress != null) {
+        const percentage = chunks.length === 0 ? 100 : Math.round(currentCompleted / chunks.length * 100);
+        onProgress(percentage);
+      }
+    };
+    await Promise.all(
+      Array.from(
+        { length: MAXIMUM_CONCURRENT_UPLOADS },
+        async (_2, workerId) => {
+          for (let i = workerId; i < chunks.length; i += MAXIMUM_CONCURRENT_UPLOADS) {
+            await uploadSingleChunk(i);
+          }
+        }
+      )
+    );
+  }
+  createFileChunks(file, chunkSize = 1024 * 1024) {
+    const chunks = [];
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    for (let index2 = 0; index2 < totalChunks; index2++) {
+      const start = index2 * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+      chunks.push(chunk);
+    }
+    return chunks;
+  }
+}
+var define_process_env_default = {};
+const DEFAULT_STORAGE_GATEWAY_URL = "https://blob.caffeine.ai";
+const DEFAULT_BUCKET_NAME = "default-bucket";
+const DEFAULT_PROJECT_ID = "0000000-0000-0000-0000-00000000000";
+let configCache = null;
+async function loadConfig() {
+  if (configCache) {
+    return configCache;
+  }
+  const backendCanisterId = define_process_env_default.CANISTER_ID_BACKEND;
+  const envBaseUrl = define_process_env_default.BASE_URL || "/";
+  const baseUrl = envBaseUrl.endsWith("/") ? envBaseUrl : `${envBaseUrl}/`;
+  try {
+    const response = await fetch(`${baseUrl}env.json`);
+    const config = await response.json();
+    if (!backendCanisterId && config.backend_canister_id === "undefined") {
+      console.error("CANISTER_ID_BACKEND is not set");
+      throw new Error("CANISTER_ID_BACKEND is not set");
+    }
+    const fullConfig = {
+      backend_host: config.backend_host === "undefined" ? void 0 : config.backend_host,
+      backend_canister_id: config.backend_canister_id === "undefined" ? backendCanisterId : config.backend_canister_id,
+      storage_gateway_url: "https://blob.caffeine.ai",
+      bucket_name: DEFAULT_BUCKET_NAME,
+      project_id: config.project_id !== "undefined" ? config.project_id : DEFAULT_PROJECT_ID,
+      ii_derivation_origin: config.ii_derivation_origin === "undefined" ? void 0 : config.ii_derivation_origin
+    };
+    configCache = fullConfig;
+    return fullConfig;
+  } catch {
+    if (!backendCanisterId) {
+      console.error("CANISTER_ID_BACKEND is not set");
+      throw new Error("CANISTER_ID_BACKEND is not set");
+    }
+    const fallbackConfig = {
+      backend_host: void 0,
+      backend_canister_id: backendCanisterId,
+      storage_gateway_url: DEFAULT_STORAGE_GATEWAY_URL,
+      bucket_name: DEFAULT_BUCKET_NAME,
+      project_id: DEFAULT_PROJECT_ID,
+      ii_derivation_origin: void 0
+    };
+    return fallbackConfig;
+  }
+}
+function extractAgentErrorMessage(error) {
+  const errorString = String(error);
+  const match = errorString.match(/with message:\s*'([^']+)'/s);
+  return match ? match[1] : errorString;
+}
+function processError(e) {
+  if (e && typeof e === "object" && "message" in e) {
+    throw new Error(extractAgentErrorMessage(`${e.message}`));
+  }
+  throw e;
+}
+async function maybeLoadMockBackend() {
+  {
+    return null;
+  }
+}
+async function createActorWithConfig(options) {
+  var _a3;
+  const mock = await maybeLoadMockBackend();
+  if (mock) {
+    return mock;
+  }
+  const config = await loadConfig();
+  const resolvedOptions = options ?? {};
+  const agent = new HttpAgent({
+    ...resolvedOptions.agentOptions,
+    host: config.backend_host
+  });
+  if ((_a3 = config.backend_host) == null ? void 0 : _a3.includes("localhost")) {
+    await agent.fetchRootKey().catch((err) => {
+      console.warn(
+        "Unable to fetch root key. Check to ensure that your local replica is running"
+      );
+      console.error(err);
+    });
+  }
+  const actorOptions = {
+    ...resolvedOptions,
+    agent,
+    processError
+  };
+  const storageClient = new StorageClient(
+    config.bucket_name,
+    config.storage_gateway_url,
+    config.backend_canister_id,
+    config.project_id,
+    agent
+  );
+  const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
+  const uploadFile = async (file) => {
+    const { hash } = await storageClient.putFile(
+      await file.getBytes(),
+      file.onProgress
+    );
+    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL + hash);
+  };
+  const downloadFile = async (bytes) => {
+    const hashWithPrefix = new TextDecoder().decode(new Uint8Array(bytes));
+    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
+    const url = await storageClient.getDirectURL(hash);
+    return ExternalBlob.fromURL(url);
+  };
+  return createActor(
+    config.backend_canister_id,
+    uploadFile,
+    downloadFile,
+    actorOptions
+  );
+}
+function storeSessionParameter(key, value) {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`Failed to store session parameter ${key}:`, error);
+  }
+}
+function getSessionParameter(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Failed to retrieve session parameter ${key}:`, error);
+    return null;
+  }
+}
+function clearParamFromHash(paramName) {
+  if (!window.history.replaceState) {
+    return;
+  }
+  const hash = window.location.hash;
+  if (!hash || hash.length <= 1) {
+    return;
+  }
+  const hashContent = hash.substring(1);
+  const queryStartIndex = hashContent.indexOf("?");
+  if (queryStartIndex === -1) {
+    return;
+  }
+  const routePath = hashContent.substring(0, queryStartIndex);
+  const queryString = hashContent.substring(queryStartIndex + 1);
+  const params = new URLSearchParams(queryString);
+  params.delete(paramName);
+  const newQueryString = params.toString();
+  let newHash = routePath;
+  if (newQueryString) {
+    newHash += `?${newQueryString}`;
+  }
+  const newUrl = window.location.pathname + window.location.search + (newHash ? `#${newHash}` : "");
+  window.history.replaceState(null, "", newUrl);
+}
+function getSecretFromHash(paramName) {
+  const existingSecret = getSessionParameter(paramName);
+  if (existingSecret !== null) {
+    return existingSecret;
+  }
+  const hash = window.location.hash;
+  if (!hash || hash.length <= 1) {
+    return null;
+  }
+  const hashContent = hash.substring(1);
+  const params = new URLSearchParams(hashContent);
+  const secret = params.get(paramName);
+  if (secret) {
+    storeSessionParameter(paramName, secret);
+    clearParamFromHash(paramName);
+    return secret;
+  }
+  return null;
+}
+function getSecretParameter(paramName) {
+  return getSecretFromHash(paramName);
+}
 function isObject(value) {
   return value !== null && typeof value === "object";
 }
@@ -38523,549 +39188,6 @@ function mergeLoginOptions(loginOptions, otherLoginOptions) {
     customValues
   };
 }
-const MAXIMUM_CONCURRENT_UPLOADS = 10;
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1e3;
-const MAX_DELAY_MS = 3e4;
-const GATEWAY_VERSION = "v1";
-const HASH_ALGORITHM = "SHA-256";
-const SHA256_PREFIX = "sha256:";
-const DOMAIN_SEPARATOR_FOR_CHUNKS = new TextEncoder().encode("icfs-chunk/");
-const DOMAIN_SEPARATOR_FOR_METADATA = new TextEncoder().encode(
-  "icfs-metadata/"
-);
-const DOMAIN_SEPARATOR_FOR_NODES = new TextEncoder().encode("ynode/");
-async function withRetry(operation) {
-  let lastError;
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      const shouldRetry = isRetriableError(error);
-      if (attempt === MAX_RETRIES || !shouldRetry) {
-        if (!shouldRetry && attempt < MAX_RETRIES) {
-          console.warn(
-            `Non-retriable error encountered: ${lastError.message}. Not retrying.`
-          );
-        }
-        throw error;
-      }
-      const delay2 = Math.min(
-        BASE_DELAY_MS * 2 ** attempt + Math.random() * 1e3,
-        MAX_DELAY_MS
-      );
-      console.warn(
-        `Request failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}): ${lastError.message}. Retrying in ${Math.round(delay2)}ms...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay2));
-    }
-  }
-  throw lastError || new Error("Unknown error occurred during retry attempts");
-}
-function isRetriableError(error) {
-  var _a3, _b3;
-  const errorMessage = ((_a3 = error == null ? void 0 : error.message) == null ? void 0 : _a3.toLowerCase()) || "";
-  if ((_b3 = error == null ? void 0 : error.response) == null ? void 0 : _b3.status) {
-    const status = error.response.status;
-    if (status === 408 || status === 429) return true;
-    if (status >= 400 && status < 500) return false;
-    if (status >= 500) return true;
-  }
-  if (errorMessage.includes("ssl") || errorMessage.includes("tls") || errorMessage.includes("network error") || errorMessage.includes("connection") || errorMessage.includes("timeout") || errorMessage.includes("fetch")) {
-    return true;
-  }
-  if (errorMessage.includes("validation") || errorMessage.includes("invalid") || errorMessage.includes("malformed") || errorMessage.includes("unauthorized") || errorMessage.includes("forbidden") || errorMessage.includes("not found")) {
-    return false;
-  }
-  return true;
-}
-function validateHashFormat(hash, context) {
-  if (!hash) {
-    throw new Error(`${context}: Hash cannot be empty`);
-  }
-  if (!hash.startsWith(SHA256_PREFIX)) {
-    throw new Error(
-      `${context}: Invalid hash format. Expected format: ${SHA256_PREFIX}<64-char-hex>, got: ${hash}`
-    );
-  }
-  const hexPart = hash.substring(SHA256_PREFIX.length);
-  if (hexPart.length !== 64) {
-    throw new Error(
-      `${context}: Invalid hash format. Expected 64 hex characters after ${SHA256_PREFIX}, got ${hexPart.length} characters: ${hash}`
-    );
-  }
-  if (!/^[0-9a-f]{64}$/i.test(hexPart)) {
-    throw new Error(
-      `${context}: Invalid hash format. Hash must contain only hex characters (0-9, a-f), got: ${hash}`
-    );
-  }
-}
-class YHash {
-  constructor(bytes) {
-    __publicField(this, "bytes");
-    if (bytes.length !== 32) {
-      throw new Error(`YHash must be exactly 32 bytes, got ${bytes.length}`);
-    }
-    this.bytes = new Uint8Array(bytes);
-  }
-  static async fromNodes(left, right) {
-    let leftBytes = left instanceof YHash ? left.bytes : new TextEncoder().encode("UNBALANCED");
-    let rightBytes = right instanceof YHash ? right.bytes : new TextEncoder().encode("UNBALANCED");
-    const combined = new Uint8Array(
-      DOMAIN_SEPARATOR_FOR_NODES.length + leftBytes.length + rightBytes.length
-    );
-    const arrays = [DOMAIN_SEPARATOR_FOR_NODES, leftBytes, rightBytes];
-    let offset = 0;
-    for (const data of arrays) {
-      combined.set(data, offset);
-      offset += data.length;
-    }
-    const hashBuffer = await crypto.subtle.digest(HASH_ALGORITHM, combined);
-    return new YHash(new Uint8Array(hashBuffer));
-  }
-  static async fromChunk(data) {
-    return YHash.fromBytes(DOMAIN_SEPARATOR_FOR_CHUNKS, data);
-  }
-  static async fromHeaders(headers) {
-    const headerLines = [];
-    for (const [key, value] of Object.entries(headers)) {
-      headerLines.push(`${key.trim()}: ${value.trim()}
-`);
-    }
-    headerLines.sort();
-    const hash = await YHash.fromBytes(
-      DOMAIN_SEPARATOR_FOR_METADATA,
-      new TextEncoder().encode(headerLines.join(""))
-    );
-    return hash;
-  }
-  static async fromBytes(domainSeparator, data) {
-    const combined = new Uint8Array(domainSeparator.length + data.length);
-    combined.set(domainSeparator);
-    combined.set(data, domainSeparator.length);
-    const hashBuffer = await crypto.subtle.digest(HASH_ALGORITHM, combined);
-    return new YHash(new Uint8Array(hashBuffer));
-  }
-  static fromHex(hexString) {
-    const bytes = new Uint8Array(
-      hexString.match(/.{1,2}/g).map((byte) => Number.parseInt(byte, 16))
-    );
-    return new YHash(bytes);
-  }
-  toShaString() {
-    return `${SHA256_PREFIX}${this.toHex()}`;
-  }
-  toString() {
-    throw new Error("toString is not supported for YHash");
-  }
-  toHex() {
-    return Array.from(this.bytes).map((b2) => b2.toString(16).padStart(2, "0")).join("");
-  }
-}
-function nodeToJSON(node) {
-  return {
-    hash: node.hash.toShaString(),
-    left: node.left ? nodeToJSON(node.left) : null,
-    right: node.right ? nodeToJSON(node.right) : null
-  };
-}
-class BlobHashTree {
-  constructor(chunk_hashes, tree, headers = null) {
-    __publicField(this, "tree_type");
-    __publicField(this, "chunk_hashes");
-    __publicField(this, "tree");
-    __publicField(this, "headers");
-    this.tree_type = "DSBMTWH";
-    this.chunk_hashes = chunk_hashes;
-    this.tree = tree;
-    if (headers == null) {
-      this.headers = [];
-    } else if (Array.isArray(headers)) {
-      this.headers = headers;
-    } else {
-      this.headers = Object.entries(headers).map(
-        ([key, value]) => `${key.trim()}: ${value.trim()}`
-      );
-    }
-    this.headers.sort();
-  }
-  static async build(chunkHashes, headers = {}) {
-    if (chunkHashes.length === 0) {
-      const hex2 = "8b8e620f084e48da0be2287fd12c5aaa4dbe14b468fd2e360f48d741fe7628a0";
-      const bytes = new TextEncoder().encode(hex2);
-      chunkHashes.push(new YHash(bytes));
-    }
-    let level = chunkHashes.map((hash) => ({
-      hash,
-      left: null,
-      right: null
-    }));
-    while (level.length > 1) {
-      const nextLevel = [];
-      for (let i = 0; i < level.length; i += 2) {
-        const left = level[i];
-        const right = level[i + 1] || null;
-        const parentHash = await YHash.fromNodes(
-          left.hash,
-          right ? right.hash : null
-        );
-        nextLevel.push({
-          hash: parentHash,
-          left,
-          right
-        });
-      }
-      level = nextLevel;
-    }
-    const chunksRoot = level[0];
-    if (headers && Object.keys(headers).length > 0) {
-      const metadataRootHash = await YHash.fromHeaders(headers);
-      const metadataRoot = {
-        hash: metadataRootHash,
-        left: null,
-        right: null
-      };
-      const combinedRootHash = await YHash.fromNodes(
-        chunksRoot.hash,
-        metadataRoot.hash
-      );
-      const combinedRoot = {
-        hash: combinedRootHash,
-        left: chunksRoot,
-        right: metadataRoot
-      };
-      return new BlobHashTree(chunkHashes, combinedRoot, headers);
-    }
-    return new BlobHashTree(chunkHashes, chunksRoot, headers);
-  }
-  toJSON() {
-    return {
-      tree_type: this.tree_type,
-      chunk_hashes: this.chunk_hashes.map((h2) => h2.toShaString()),
-      tree: nodeToJSON(this.tree),
-      headers: this.headers
-    };
-  }
-}
-class StorageGatewayClient {
-  constructor(storageGatewayUrl) {
-    this.storageGatewayUrl = storageGatewayUrl;
-  }
-  getStorageGatewayUrl() {
-    return this.storageGatewayUrl;
-  }
-  async uploadChunk(params) {
-    const blobHashString = params.blobRootHash.toShaString();
-    const chunkHashString = params.chunkHash.toShaString();
-    validateHashFormat(
-      blobHashString,
-      `uploadChunk[${params.chunkIndex}] blob_hash`
-    );
-    validateHashFormat(
-      chunkHashString,
-      `uploadChunk[${params.chunkIndex}] chunk_hash`
-    );
-    return await withRetry(async () => {
-      const queryParams = new URLSearchParams({
-        owner_id: params.owner,
-        blob_hash: blobHashString,
-        chunk_hash: chunkHashString,
-        chunk_index: params.chunkIndex.toString(),
-        bucket_name: params.bucketName,
-        project_id: params.projectId
-      });
-      const url = `${this.storageGatewayUrl}/${GATEWAY_VERSION}/chunk/?${queryParams.toString()}`;
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "X-Caffeine-Project-ID": params.projectId
-        },
-        body: params.chunkData
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        const error = new Error(
-          `Failed to upload chunk ${params.chunkIndex}: ${response.status} ${response.statusText} - ${errorText}`
-        );
-        error.response = { status: response.status };
-        throw error;
-      }
-      const result = await response.json();
-      return {
-        isComplete: result.status === "blob_complete"
-      };
-    });
-  }
-  async uploadBlobTree(blobHashTree, bucketName, numBlobBytes, owner, projectId, certificateBytes) {
-    const treeJSON = blobHashTree.toJSON();
-    validateHashFormat(treeJSON.tree.hash, "uploadBlobTree root hash");
-    treeJSON.chunk_hashes.forEach((hash, index2) => {
-      validateHashFormat(hash, `uploadBlobTree chunk_hash[${index2}]`);
-    });
-    return await withRetry(async () => {
-      const url = `${this.storageGatewayUrl}/${GATEWAY_VERSION}/blob-tree/`;
-      const requestBody = {
-        blob_tree: treeJSON,
-        bucket_name: bucketName,
-        num_blob_bytes: numBlobBytes,
-        owner,
-        project_id: projectId,
-        headers: blobHashTree.headers,
-        auth: {
-          OwnerEgressSignature: Array.from(certificateBytes)
-        }
-      };
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Caffeine-Project-ID": projectId
-        },
-        body: JSON.stringify(requestBody)
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        const error = new Error(
-          `Failed to upload blob tree: ${response.status} ${response.statusText} - ${errorText}`
-        );
-        error.response = { status: response.status };
-        throw error;
-      }
-    });
-  }
-}
-class StorageClient {
-  constructor(bucket, storageGatewayUrl, backendCanisterId, projectId, agent) {
-    __publicField(this, "storageGatewayClient");
-    this.bucket = bucket;
-    this.backendCanisterId = backendCanisterId;
-    this.projectId = projectId;
-    this.agent = agent;
-    this.storageGatewayClient = new StorageGatewayClient(storageGatewayUrl);
-  }
-  async getCertificate(hash) {
-    const args = encode$1([Text], [hash]);
-    const result = await this.agent.call(this.backendCanisterId, {
-      methodName: "_caffeineStorageCreateCertificate",
-      arg: args
-    });
-    const respone = result.response.body;
-    if (isV3ResponseBody(respone)) {
-      console.log("Certificate:", respone.certificate);
-      return respone.certificate;
-    }
-    throw new Error("Expected v3 response body");
-  }
-  async putFile(blobBytes, onProgress) {
-    const httpHeaders = {
-      "Content-Type": "application/json"
-    };
-    const file = new Blob([new Uint8Array(blobBytes)], {
-      type: "application/octet-stream"
-    });
-    const fileHeaders = {
-      "Content-Type": "application/octet-stream",
-      "Content-Length": file.size.toString()
-    };
-    const { chunks, chunkHashes, blobHashTree } = await this.processFileForUpload(file, fileHeaders);
-    const blobRootHash = blobHashTree.tree.hash;
-    const hashString2 = blobRootHash.toShaString();
-    const certificateBytes = await this.getCertificate(hashString2);
-    await this.storageGatewayClient.uploadBlobTree(
-      blobHashTree,
-      this.bucket,
-      file.size,
-      this.backendCanisterId,
-      this.projectId,
-      certificateBytes
-    );
-    await this.parallelUpload(
-      chunks,
-      chunkHashes,
-      blobRootHash,
-      httpHeaders,
-      onProgress
-    );
-    return { hash: hashString2 };
-  }
-  async getDirectURL(hash) {
-    if (!hash) {
-      throw new Error("Hash must not be empty");
-    }
-    validateHashFormat(hash, `getDirectURL for path '${hash}'`);
-    return `${this.storageGatewayClient.getStorageGatewayUrl()}/${GATEWAY_VERSION}/blob/?blob_hash=${encodeURIComponent(hash)}&owner_id=${encodeURIComponent(this.backendCanisterId)}&project_id=${encodeURIComponent(this.projectId)}`;
-  }
-  async processFileForUpload(file, headers) {
-    const chunks = this.createFileChunks(file);
-    const chunkHashes = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkData = new Uint8Array(await chunks[i].arrayBuffer());
-      const hash = await YHash.fromChunk(chunkData);
-      chunkHashes.push(hash);
-    }
-    const blobHashTree = await BlobHashTree.build(chunkHashes, headers);
-    return { chunks, chunkHashes, blobHashTree };
-  }
-  async parallelUpload(chunks, chunkHashes, blobRootHash, httpHeaders, onProgress) {
-    let completedChunks = 0;
-    const uploadSingleChunk = async (index2) => {
-      const chunkData = new Uint8Array(await chunks[index2].arrayBuffer());
-      const chunkHash = chunkHashes[index2];
-      await this.storageGatewayClient.uploadChunk({
-        blobRootHash,
-        chunkHash,
-        chunkIndex: index2,
-        chunkData,
-        bucketName: this.bucket,
-        owner: this.backendCanisterId,
-        projectId: this.projectId,
-        httpHeaders
-      });
-      const currentCompleted = ++completedChunks;
-      if (onProgress != null) {
-        const percentage = chunks.length === 0 ? 100 : Math.round(currentCompleted / chunks.length * 100);
-        onProgress(percentage);
-      }
-    };
-    await Promise.all(
-      Array.from(
-        { length: MAXIMUM_CONCURRENT_UPLOADS },
-        async (_2, workerId) => {
-          for (let i = workerId; i < chunks.length; i += MAXIMUM_CONCURRENT_UPLOADS) {
-            await uploadSingleChunk(i);
-          }
-        }
-      )
-    );
-  }
-  createFileChunks(file, chunkSize = 1024 * 1024) {
-    const chunks = [];
-    const totalChunks = Math.ceil(file.size / chunkSize);
-    for (let index2 = 0; index2 < totalChunks; index2++) {
-      const start = index2 * chunkSize;
-      const end = Math.min(start + chunkSize, file.size);
-      const chunk = file.slice(start, end);
-      chunks.push(chunk);
-    }
-    return chunks;
-  }
-}
-var define_process_env_default = {};
-const DEFAULT_STORAGE_GATEWAY_URL = "https://blob.caffeine.ai";
-const DEFAULT_BUCKET_NAME = "default-bucket";
-const DEFAULT_PROJECT_ID = "0000000-0000-0000-0000-00000000000";
-let configCache = null;
-async function loadConfig() {
-  if (configCache) {
-    return configCache;
-  }
-  const backendCanisterId = define_process_env_default.CANISTER_ID_BACKEND;
-  const envBaseUrl = define_process_env_default.BASE_URL || "/";
-  const baseUrl = envBaseUrl.endsWith("/") ? envBaseUrl : `${envBaseUrl}/`;
-  try {
-    const response = await fetch(`${baseUrl}env.json`);
-    const config = await response.json();
-    if (!backendCanisterId && config.backend_canister_id === "undefined") {
-      console.error("CANISTER_ID_BACKEND is not set");
-      throw new Error("CANISTER_ID_BACKEND is not set");
-    }
-    const fullConfig = {
-      backend_host: config.backend_host === "undefined" ? void 0 : config.backend_host,
-      backend_canister_id: config.backend_canister_id === "undefined" ? backendCanisterId : config.backend_canister_id,
-      storage_gateway_url: "https://blob.caffeine.ai",
-      bucket_name: DEFAULT_BUCKET_NAME,
-      project_id: config.project_id !== "undefined" ? config.project_id : DEFAULT_PROJECT_ID,
-      ii_derivation_origin: config.ii_derivation_origin === "undefined" ? void 0 : config.ii_derivation_origin
-    };
-    configCache = fullConfig;
-    return fullConfig;
-  } catch {
-    if (!backendCanisterId) {
-      console.error("CANISTER_ID_BACKEND is not set");
-      throw new Error("CANISTER_ID_BACKEND is not set");
-    }
-    const fallbackConfig = {
-      backend_host: void 0,
-      backend_canister_id: backendCanisterId,
-      storage_gateway_url: DEFAULT_STORAGE_GATEWAY_URL,
-      bucket_name: DEFAULT_BUCKET_NAME,
-      project_id: DEFAULT_PROJECT_ID,
-      ii_derivation_origin: void 0
-    };
-    return fallbackConfig;
-  }
-}
-function extractAgentErrorMessage(error) {
-  const errorString = String(error);
-  const match = errorString.match(/with message:\s*'([^']+)'/s);
-  return match ? match[1] : errorString;
-}
-function processError(e) {
-  if (e && typeof e === "object" && "message" in e) {
-    throw new Error(extractAgentErrorMessage(`${e.message}`));
-  }
-  throw e;
-}
-async function maybeLoadMockBackend() {
-  {
-    return null;
-  }
-}
-async function createActorWithConfig(options) {
-  var _a3;
-  const mock = await maybeLoadMockBackend();
-  if (mock) {
-    return mock;
-  }
-  const config = await loadConfig();
-  const resolvedOptions = options ?? {};
-  const agent = new HttpAgent({
-    ...resolvedOptions.agentOptions,
-    host: config.backend_host
-  });
-  if ((_a3 = config.backend_host) == null ? void 0 : _a3.includes("localhost")) {
-    await agent.fetchRootKey().catch((err) => {
-      console.warn(
-        "Unable to fetch root key. Check to ensure that your local replica is running"
-      );
-      console.error(err);
-    });
-  }
-  const actorOptions = {
-    ...resolvedOptions,
-    agent,
-    processError
-  };
-  const storageClient = new StorageClient(
-    config.bucket_name,
-    config.storage_gateway_url,
-    config.backend_canister_id,
-    config.project_id,
-    agent
-  );
-  const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
-  const uploadFile = async (file) => {
-    const { hash } = await storageClient.putFile(
-      await file.getBytes(),
-      file.onProgress
-    );
-    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL + hash);
-  };
-  const downloadFile = async (bytes) => {
-    const hashWithPrefix = new TextDecoder().decode(new Uint8Array(bytes));
-    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
-    const url = await storageClient.getDirectURL(hash);
-    return ExternalBlob.fromURL(url);
-  };
-  return createActor(
-    config.backend_canister_id,
-    uploadFile,
-    downloadFile,
-    actorOptions
-  );
-}
 const ONE_HOUR_IN_NANOSECONDS = BigInt(36e11);
 const DEFAULT_IDENTITY_PROVIDER = "https://id.ai";
 const InternetIdentityReactContext = reactExports.createContext(
@@ -39218,68 +39340,6 @@ function InternetIdentityProvider({
     children
   });
 }
-function storeSessionParameter(key, value) {
-  try {
-    sessionStorage.setItem(key, value);
-  } catch (error) {
-    console.warn(`Failed to store session parameter ${key}:`, error);
-  }
-}
-function getSessionParameter(key) {
-  try {
-    return sessionStorage.getItem(key);
-  } catch (error) {
-    console.warn(`Failed to retrieve session parameter ${key}:`, error);
-    return null;
-  }
-}
-function clearParamFromHash(paramName) {
-  if (!window.history.replaceState) {
-    return;
-  }
-  const hash = window.location.hash;
-  if (!hash || hash.length <= 1) {
-    return;
-  }
-  const hashContent = hash.substring(1);
-  const queryStartIndex = hashContent.indexOf("?");
-  if (queryStartIndex === -1) {
-    return;
-  }
-  const routePath = hashContent.substring(0, queryStartIndex);
-  const queryString = hashContent.substring(queryStartIndex + 1);
-  const params = new URLSearchParams(queryString);
-  params.delete(paramName);
-  const newQueryString = params.toString();
-  let newHash = routePath;
-  if (newQueryString) {
-    newHash += `?${newQueryString}`;
-  }
-  const newUrl = window.location.pathname + window.location.search + (newHash ? `#${newHash}` : "");
-  window.history.replaceState(null, "", newUrl);
-}
-function getSecretFromHash(paramName) {
-  const existingSecret = getSessionParameter(paramName);
-  if (existingSecret !== null) {
-    return existingSecret;
-  }
-  const hash = window.location.hash;
-  if (!hash || hash.length <= 1) {
-    return null;
-  }
-  const hashContent = hash.substring(1);
-  const params = new URLSearchParams(hashContent);
-  const secret = params.get(paramName);
-  if (secret) {
-    storeSessionParameter(paramName, secret);
-    clearParamFromHash(paramName);
-    return secret;
-  }
-  return null;
-}
-function getSecretParameter(paramName) {
-  return getSecretFromHash(paramName);
-}
 const ACTOR_QUERY_KEY = "actor";
 function useActor() {
   const { identity } = useInternetIdentity();
@@ -39325,37 +39385,26 @@ function useActor() {
     isFetching: actorQuery.isFetching
   };
 }
-function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
-  return useQuery({
-    queryKey: ["isCallerAdmin"],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
-    },
-    enabled: !!actor && !isFetching
-  });
-}
 function useGetAllUploads() {
-  const { actor, isFetching } = useActor();
+  const { actor } = useActor();
   return useQuery({
     queryKey: ["allUploads"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllUploads();
     },
-    enabled: !!actor && !isFetching
+    enabled: !!actor
   });
 }
 function useGetStats() {
-  const { actor, isFetching } = useActor();
+  const { actor } = useActor();
   return useQuery({
     queryKey: ["stats"],
     queryFn: async () => {
       if (!actor) return [0n, 0n];
       return actor.getStats();
     },
-    enabled: !!actor && !isFetching
+    enabled: !!actor
   });
 }
 function useUploadMemory() {
@@ -39380,6 +39429,8 @@ function useUploadMemory() {
     }
   });
 }
+const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
+const ADMIN_PASSWORD = "Kaushal@123";
 function formatTimestamp(ts) {
   const ms = Number(ts / 1000000n);
   const date = new Date(ms);
@@ -39408,48 +39459,11 @@ function getFileTypeIcon(fileName) {
     }
   );
 }
-function LoginButton() {
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
-  const queryClient2 = useQueryClient();
-  const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === "logging-in";
-  const handleAuth = async () => {
-    if (isAuthenticated) {
-      await clear();
-      queryClient2.clear();
-    } else {
-      try {
-        await login();
-      } catch (error) {
-        console.error("Login error:", error);
-        if ((error == null ? void 0 : error.message) === "User is already authenticated") {
-          await clear();
-          setTimeout(() => login(), 300);
-        }
-      }
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    Button,
-    {
-      onClick: handleAuth,
-      disabled: isLoggingIn,
-      className: "rounded-full font-semibold px-6 text-white",
-      style: {
-        background: isAuthenticated ? "oklch(0.55 0.06 40)" : "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
-      },
-      "data-ocid": "admin.auth.button",
-      children: [
-        isLoggingIn ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: "w-4 h-4 mr-2 animate-spin" }) : isAuthenticated ? /* @__PURE__ */ jsxRuntimeExports.jsx(LogOut, { className: "w-4 h-4 mr-2" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(LogIn, { className: "w-4 h-4 mr-2" }),
-        isLoggingIn ? "Signing in…" : isAuthenticated ? "Sign Out" : "Sign In"
-      ]
-    }
-  );
-}
 function AdminPage({ onNavigateHome }) {
-  const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
-  const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
+  const [isLoggedIn, setIsLoggedIn] = reactExports.useState(false);
+  const [email, setEmail] = reactExports.useState("");
+  const [password, setPassword] = reactExports.useState("");
+  const [loginError, setLoginError] = reactExports.useState("");
   const {
     data: uploads,
     isLoading: uploadsLoading,
@@ -39461,6 +39475,21 @@ function AdminPage({ onNavigateHome }) {
   const handleViewFile = (blobId) => {
     const blob = ExternalBlob.fromURL(blobId);
     window.open(blob.getDirectURL(), "_blank");
+  };
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      setIsLoggedIn(true);
+      setLoginError("");
+    } else {
+      setLoginError("Invalid email or password.");
+    }
+  };
+  const handleSignOut = () => {
+    setIsLoggedIn(false);
+    setEmail("");
+    setPassword("");
+    setLoginError("");
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
@@ -39513,106 +39542,127 @@ function AdminPage({ onNavigateHome }) {
                   )
                 ] })
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(LoginButton, {})
+              isLoggedIn && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                Button,
+                {
+                  onClick: handleSignOut,
+                  className: "rounded-full font-semibold px-6 text-white",
+                  style: { background: "oklch(0.55 0.06 40)" },
+                  "data-ocid": "admin.signout.button",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(LogOut, { className: "w-4 h-4 mr-2" }),
+                    "Sign Out"
+                  ]
+                }
+              )
             ] }) })
           }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 py-8", children: !isAuthenticated ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 py-8", children: !isLoggedIn ? /* @__PURE__ */ jsxRuntimeExports.jsx(
           motion.div,
           {
             initial: { opacity: 0, y: 20 },
             animate: { opacity: 1, y: 0 },
-            className: "flex flex-col items-center justify-center py-24 text-center",
+            className: "flex flex-col items-center justify-center py-16",
             "data-ocid": "admin.login.panel",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: "w-20 h-20 rounded-full flex items-center justify-center mb-6",
-                  style: { backgroundColor: "oklch(1 0 0 / 0.7)" },
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    Lock,
+            children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "div",
+              {
+                className: "w-full max-w-sm rounded-2xl shadow-card p-8",
+                style: { backgroundColor: "oklch(1 0 0)" },
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center mb-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "div",
                     {
-                      className: "w-8 h-8",
-                      style: { color: "oklch(var(--coral-primary))" }
+                      className: "w-16 h-16 rounded-full flex items-center justify-center",
+                      style: {
+                        background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
+                      },
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-7 h-7 text-white" })
                     }
-                  )
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "h2",
-                {
-                  className: "font-display font-bold text-3xl mb-3",
-                  style: { color: "oklch(var(--hero-brown))" },
-                  children: "Admin Access Required"
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-sm max-w-sm mb-8",
-                  style: { color: "oklch(0.45 0.06 40)" },
-                  children: "Sign in with Internet Identity to access the admin panel and view all uploaded memories."
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(LoginButton, {})
-            ]
-          }
-        ) : adminLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "div",
-          {
-            className: "py-16 flex flex-col items-center gap-4",
-            "data-ocid": "admin.loading_state",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                RefreshCw,
-                {
-                  className: "w-8 h-8 animate-spin",
-                  style: { color: "oklch(var(--coral-primary))" }
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "oklch(0.45 0.06 40)" }, children: "Checking permissions…" })
-            ]
-          }
-        ) : !isAdmin ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          motion.div,
-          {
-            initial: { opacity: 0, y: 20 },
-            animate: { opacity: 1, y: 0 },
-            className: "flex flex-col items-center justify-center py-24 text-center",
-            "data-ocid": "admin.access_denied.panel",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: "w-20 h-20 rounded-full flex items-center justify-center mb-6",
-                  style: { backgroundColor: "oklch(0.95 0.04 25)" },
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    Shield,
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "h2",
                     {
-                      className: "w-8 h-8",
-                      style: { color: "oklch(0.55 0.15 25)" }
+                      className: "font-display font-bold text-2xl text-center mb-6",
+                      style: { color: "oklch(var(--hero-brown))" },
+                      children: "Admin Login"
                     }
-                  )
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "h2",
-                {
-                  className: "font-display font-bold text-3xl mb-3",
-                  style: { color: "oklch(var(--hero-brown))" },
-                  children: "Access Denied"
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "p",
-                {
-                  className: "text-sm max-w-sm",
-                  style: { color: "oklch(0.45 0.06 40)" },
-                  children: "Your account does not have admin privileges. Please contact the site administrator."
-                }
-              )
-            ]
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleLogin, className: "space-y-4", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Label,
+                        {
+                          htmlFor: "admin-email",
+                          className: "text-sm font-medium",
+                          style: { color: "oklch(var(--hero-brown))" },
+                          children: "Email"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Input,
+                        {
+                          id: "admin-email",
+                          type: "email",
+                          value: email,
+                          onChange: (e) => setEmail(e.target.value),
+                          placeholder: "admin@example.com",
+                          required: true,
+                          className: "rounded-xl border-border/60 focus:border-coral/60",
+                          "data-ocid": "admin.login.input"
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Label,
+                        {
+                          htmlFor: "admin-password",
+                          className: "text-sm font-medium",
+                          style: { color: "oklch(var(--hero-brown))" },
+                          children: "Password"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Input,
+                        {
+                          id: "admin-password",
+                          type: "password",
+                          value: password,
+                          onChange: (e) => setPassword(e.target.value),
+                          placeholder: "••••••••",
+                          required: true,
+                          className: "rounded-xl border-border/60 focus:border-coral/60",
+                          "data-ocid": "admin.login.password"
+                        }
+                      )
+                    ] }),
+                    loginError && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "p",
+                      {
+                        className: "text-sm text-center",
+                        style: { color: "oklch(0.5 0.18 25)" },
+                        "data-ocid": "admin.login.error_state",
+                        children: loginError
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      Button,
+                      {
+                        type: "submit",
+                        className: "w-full rounded-xl font-semibold text-white mt-2",
+                        style: {
+                          background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
+                        },
+                        "data-ocid": "admin.login.submit_button",
+                        children: "Sign In"
+                      }
+                    )
+                  ] })
+                ]
+              }
+            )
           }
         ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
@@ -39941,89 +39991,6 @@ function AdminPage({ onNavigateHome }) {
           }
         )
       ]
-    }
-  );
-}
-function Input({ className, type, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "input",
-    {
-      type,
-      "data-slot": "input",
-      className: cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-        className
-      ),
-      ...props
-    }
-  );
-}
-var NODES = [
-  "a",
-  "button",
-  "div",
-  "form",
-  "h2",
-  "h3",
-  "img",
-  "input",
-  "label",
-  "li",
-  "nav",
-  "ol",
-  "p",
-  "select",
-  "span",
-  "svg",
-  "ul"
-];
-var Primitive = NODES.reduce((primitive, node) => {
-  const Slot2 = /* @__PURE__ */ createSlot(`Primitive.${node}`);
-  const Node = reactExports.forwardRef((props, forwardedRef) => {
-    const { asChild, ...primitiveProps } = props;
-    const Comp = asChild ? Slot2 : node;
-    if (typeof window !== "undefined") {
-      window[Symbol.for("radix-ui")] = true;
-    }
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Comp, { ...primitiveProps, ref: forwardedRef });
-  });
-  Node.displayName = `Primitive.${node}`;
-  return { ...primitive, [node]: Node };
-}, {});
-var NAME = "Label";
-var Label$1 = reactExports.forwardRef((props, forwardedRef) => {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    Primitive.label,
-    {
-      ...props,
-      ref: forwardedRef,
-      onMouseDown: (event) => {
-        var _a3;
-        const target = event.target;
-        if (target.closest("button, input, select, textarea")) return;
-        (_a3 = props.onMouseDown) == null ? void 0 : _a3.call(props, event);
-        if (!event.defaultPrevented && event.detail > 1) event.preventDefault();
-      }
-    }
-  );
-});
-Label$1.displayName = NAME;
-var Root$1 = Label$1;
-function Label({
-  className,
-  ...props
-}) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    Root$1,
-    {
-      "data-slot": "label",
-      className: cn(
-        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        className
-      ),
-      ...props
     }
   );
 }

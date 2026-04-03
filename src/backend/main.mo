@@ -65,7 +65,6 @@ actor {
   };
 
   // Public upload endpoint - NO authentication required
-  // Anyone (including guests/anonymous) can upload memories
   public shared ({ caller }) func uploadMemory(uploaderName : Text, file : Storage.ExternalBlob, fileName : Text) : async () {
     if (uploaderName.size() == 0 or fileName.size() == 0) {
       Runtime.trap("Uploader name and file name are required");
@@ -75,35 +74,25 @@ actor {
       uploaderName;
       fileName;
       timestamp = Time.now();
-      blobId = fileName; // Use fileName as the blob ID
+      blobId = fileName;
     };
 
     let newEntries = Array.empty<UploadEntry>().concat(uploadEntries).concat([newEntry]);
     uploadEntries := newEntries;
   };
 
-  // Admin-only endpoint to list all upload entries
-  public query ({ caller }) func getAllUploads() : async [UploadEntry] {
-    if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Admin access required");
-    };
+  // Public endpoint to list all upload entries (protected by frontend password)
+  public query func getAllUploads() : async [UploadEntry] {
     uploadEntries;
   };
 
-  // Admin-only endpoint to get stats
-  public query ({ caller }) func getStats() : async (Nat, Nat) {
-    if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Admin access required");
-    };
-    // Total uploads = array size
+  // Public endpoint to get stats (protected by frontend password)
+  public query func getStats() : async (Nat, Nat) {
     let totalUploads = uploadEntries.size();
-
-    // Total unique uploaders - iterate and count unique names
     let uniqueUploaderNames = Set.empty<Text>();
     for (entry in uploadEntries.values()) {
       uniqueUploaderNames.add(entry.uploaderName);
     };
-
     (totalUploads, uniqueUploaderNames.size());
   };
 };
