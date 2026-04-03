@@ -871,9 +871,24 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
               </span>
             </div>
             <div
-              className="flex items-center gap-3 text-xs"
+              className="flex flex-col sm:flex-row items-center gap-3 text-xs"
               style={{ color: "oklch(0.55 0.05 40)" }}
             >
+              <span style={{ color: "oklch(0.45 0.06 40)" }}>
+                Created by{" "}
+                <span
+                  className="font-semibold"
+                  style={{ color: "oklch(var(--hero-brown))" }}
+                >
+                  Dhruv Dhameliya
+                </span>
+              </span>
+              <span
+                className="hidden sm:inline"
+                style={{ color: "oklch(0.7 0.04 40)" }}
+              >
+                ·
+              </span>
               <a
                 href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
                 target="_blank"

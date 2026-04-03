@@ -43699,25 +43699,47 @@ function HomePage({ onNavigateAdmin }) {
                   }
                 )
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "div",
                 {
-                  className: "flex items-center gap-3 text-xs",
+                  className: "flex flex-col sm:flex-row items-center gap-3 text-xs",
                   style: { color: "oklch(0.55 0.05 40)" },
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "a",
-                    {
-                      href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
-                      target: "_blank",
-                      rel: "noopener noreferrer",
-                      className: "hover:underline",
-                      children: [
-                        "© ",
-                        (/* @__PURE__ */ new Date()).getFullYear(),
-                        ". Built with love using caffeine.ai"
-                      ]
-                    }
-                  )
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { color: "oklch(0.45 0.06 40)" }, children: [
+                      "Created by",
+                      " ",
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          className: "font-semibold",
+                          style: { color: "oklch(var(--hero-brown))" },
+                          children: "Dhruv Dhameliya"
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "span",
+                      {
+                        className: "hidden sm:inline",
+                        style: { color: "oklch(0.7 0.04 40)" },
+                        children: "·"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "a",
+                      {
+                        href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        className: "hover:underline",
+                        children: [
+                          "© ",
+                          (/* @__PURE__ */ new Date()).getFullYear(),
+                          ". Built with love using caffeine.ai"
+                        ]
+                      }
+                    )
+                  ]
                 }
               )
             ] }) })
