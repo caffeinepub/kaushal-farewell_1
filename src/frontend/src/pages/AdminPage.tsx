@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,17 +19,21 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft,
+  Download,
+  Eye,
   File,
   FileImage,
   FileVideo,
   Heart,
+  Loader2,
   LogOut,
   RefreshCw,
   Shield,
   Upload,
   Users,
+  X,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { ExternalBlob } from "../backend";
 import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
@@ -31,8 +41,29 @@ import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
 const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
 const ADMIN_PASSWORD = "Kaushal@123";
 
+const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
+const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
+
+function getFileExt(fileName: string): string {
+  return fileName.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function isImage(fileName: string): boolean {
+  return IMAGE_EXTS.includes(getFileExt(fileName));
+}
+
+function isVideo(fileName: string): boolean {
+  return VIDEO_EXTS.includes(getFileExt(fileName));
+}
+
 interface AdminPageProps {
   onNavigateHome: () => void;
+}
+
+interface PreviewEntry {
+  blobId: string;
+  fileName: string;
+  uploaderName: string;
 }
 
 function formatTimestamp(ts: bigint): string {
@@ -48,13 +79,21 @@ function formatTimestamp(ts: bigint): string {
 }
 
 function getFileTypeIcon(fileName: string) {
-  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
-  const videoExts = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
-  if (imageExts.includes(ext))
-    return <FileImage className="w-4 h-4 text-coral" />;
-  if (videoExts.includes(ext))
-    return <FileVideo className="w-4 h-4 text-coral" />;
+  const ext = getFileExt(fileName);
+  if (IMAGE_EXTS.includes(ext))
+    return (
+      <FileImage
+        className="w-4 h-4"
+        style={{ color: "oklch(var(--coral-primary))" }}
+      />
+    );
+  if (VIDEO_EXTS.includes(ext))
+    return (
+      <FileVideo
+        className="w-4 h-4"
+        style={{ color: "oklch(var(--coral-primary))" }}
+      />
+    );
   return (
     <File
       className="w-4 h-4"
@@ -63,11 +102,188 @@ function getFileTypeIcon(fileName: string) {
   );
 }
 
+function MediaThumbnail({
+  blobId,
+  fileName,
+  onClick,
+}: {
+  blobId: string;
+  fileName: string;
+  onClick: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const url = ExternalBlob.fromURL(blobId).getDirectURL();
+
+  if (isImage(fileName)) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring"
+        style={{ width: 64, height: 48 }}
+        aria-label="Preview image"
+        data-ocid="admin.uploads.preview_button"
+      >
+        {!loaded && <Skeleton className="absolute inset-0 rounded-lg" />}
+        <img
+          src={url}
+          alt={fileName}
+          className="w-full h-full object-cover rounded-lg"
+          style={{ display: loaded ? "block" : "none" }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+        />
+        {loaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg">
+            <Eye className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" />
+          </div>
+        )}
+      </button>
+    );
+  }
+
+  if (isVideo(fileName)) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity bg-black focus:outline-none focus:ring-2 focus:ring-ring"
+        style={{ width: 80, height: 48 }}
+        aria-label="Preview video"
+        data-ocid="admin.uploads.preview_button"
+      >
+        <video
+          src={url}
+          muted
+          preload="metadata"
+          className="w-full h-full object-cover rounded-lg"
+          style={{ pointerEvents: "none" }}
+        >
+          <track kind="captions" />
+        </video>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: "oklch(0.63 0.14 29 / 0.9)" }}
+          >
+            <span className="text-white text-xs ml-0.5">▶</span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  // Generic file — small icon placeholder
+  return (
+    <div
+      className="flex-shrink-0 rounded-lg border border-border/40 flex items-center justify-center"
+      style={{
+        width: 48,
+        height: 48,
+        backgroundColor: "oklch(0.96 0.015 55)",
+      }}
+    >
+      {getFileTypeIcon(fileName)}
+    </div>
+  );
+}
+
+function MediaPreviewModal({
+  entry,
+  onClose,
+}: {
+  entry: PreviewEntry | null;
+  onClose: () => void;
+}) {
+  if (!entry) return null;
+  const url = ExternalBlob.fromURL(entry.blobId).getDirectURL();
+
+  return (
+    <Dialog open={!!entry} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className="max-w-3xl w-full p-0 overflow-hidden rounded-2xl"
+        style={{ backgroundColor: "oklch(0.14 0.02 30)" }}
+        data-ocid="admin.preview.dialog"
+      >
+        <DialogHeader
+          className="px-5 pt-4 pb-3 border-b"
+          style={{ borderColor: "oklch(1 0 0 / 0.1)" }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <DialogTitle
+                className="text-base font-semibold leading-tight"
+                style={{ color: "oklch(0.95 0.02 55)" }}
+              >
+                {entry.fileName}
+              </DialogTitle>
+              <p
+                className="text-xs mt-0.5"
+                style={{ color: "oklch(0.65 0.04 40)" }}
+              >
+                Uploaded by{" "}
+                <span style={{ color: "oklch(0.78 0.1 30)" }}>
+                  {entry.uploaderName}
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+              style={{ backgroundColor: "oklch(1 0 0 / 0.1)" }}
+              data-ocid="admin.preview.close_button"
+            >
+              <X className="w-4 h-4" style={{ color: "oklch(0.85 0.02 55)" }} />
+            </button>
+          </div>
+        </DialogHeader>
+
+        <div
+          className="flex items-center justify-center p-4"
+          style={{ minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" }}
+        >
+          {isImage(entry.fileName) ? (
+            <img
+              src={url}
+              alt={entry.fileName}
+              className="max-w-full max-h-[65vh] object-contain rounded-lg"
+              style={{ boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" }}
+            />
+          ) : isVideo(entry.fileName) ? (
+            <video
+              src={url}
+              controls
+              autoPlay
+              className="max-w-full max-h-[65vh] rounded-lg"
+              style={{ boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" }}
+            >
+              <track kind="captions" />
+            </video>
+          ) : (
+            <div className="text-center py-12">
+              <File
+                className="w-12 h-12 mx-auto mb-3"
+                style={{ color: "oklch(0.65 0.04 40)" }}
+              />
+              <p className="text-sm" style={{ color: "oklch(0.65 0.04 40)" }}>
+                Preview not available for this file type.
+              </p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [previewEntry, setPreviewEntry] = useState<PreviewEntry | null>(null);
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
 
   const {
     data: uploads,
@@ -82,6 +298,30 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const handleViewFile = (blobId: string) => {
     const blob = ExternalBlob.fromURL(blobId);
     window.open(blob.getDirectURL(), "_blank");
+  };
+
+  const handleDownload = async (blobId: string, fileName: string) => {
+    setDownloadingIds((prev) => new Set(prev).add(blobId));
+    try {
+      const blob = ExternalBlob.fromURL(blobId);
+      const url = blob.getDirectURL();
+      const response = await fetch(url);
+      const data = await response.blob();
+      const objectUrl = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(blobId);
+        return next;
+      });
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -372,10 +612,11 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 >
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-12 w-16 rounded-lg" />
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-4 w-48" />
                       <Skeleton className="h-4 w-36" />
-                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-8 w-20" />
                     </div>
                   ))}
                 </div>
@@ -411,10 +652,16 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     <TableHeader>
                       <TableRow className="border-border/50">
                         <TableHead
-                          className="text-xs font-bold uppercase tracking-wider"
+                          className="text-xs font-bold uppercase tracking-wider w-10"
                           style={{ color: "oklch(var(--hero-brown))" }}
                         >
                           #
+                        </TableHead>
+                        <TableHead
+                          className="text-xs font-bold uppercase tracking-wider w-24"
+                          style={{ color: "oklch(var(--hero-brown))" }}
+                        >
+                          Preview
                         </TableHead>
                         <TableHead
                           className="text-xs font-bold uppercase tracking-wider"
@@ -435,76 +682,147 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                           Timestamp
                         </TableHead>
                         <TableHead
-                          className="text-xs font-bold uppercase tracking-wider"
+                          className="text-xs font-bold uppercase tracking-wider text-right"
                           style={{ color: "oklch(var(--hero-brown))" }}
                         >
-                          Action
+                          Actions
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {uploads.map((entry, idx) => (
-                        <TableRow
-                          key={entry.blobId}
-                          className="border-border/30 hover:bg-accent/30 transition-colors"
-                          data-ocid={`admin.uploads.row.${idx + 1}`}
-                        >
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "oklch(var(--muted-foreground))" }}
+                      <AnimatePresence>
+                        {uploads.map((entry, idx) => (
+                          <motion.tr
+                            key={entry.blobId}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.04, duration: 0.25 }}
+                            className="border-border/30 hover:bg-accent/30 transition-colors"
+                            data-ocid={`admin.uploads.item.${idx + 1}`}
                           >
-                            {idx + 1}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                                style={{
-                                  background:
-                                    "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
-                                }}
-                              >
-                                {entry.uploaderName.charAt(0).toUpperCase()}
-                              </div>
-                              <span
-                                className="text-sm font-medium"
-                                style={{ color: "oklch(var(--hero-brown))" }}
-                              >
-                                {entry.uploaderName}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              {getFileTypeIcon(entry.fileName)}
-                              <span
-                                className="text-sm max-w-[200px] truncate block"
-                                style={{ color: "oklch(var(--foreground))" }}
-                                title={entry.fileName}
-                              >
-                                {entry.fileName}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "oklch(var(--muted-foreground))" }}
-                          >
-                            {formatTimestamp(entry.timestamp)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleViewFile(entry.blobId)}
-                              className="text-xs h-7 rounded-full border-border/60 hover:border-coral/50"
-                              data-ocid={`admin.uploads.view_button.${idx + 1}`}
+                            {/* # */}
+                            <TableCell
+                              className="text-xs"
+                              style={{
+                                color: "oklch(var(--muted-foreground))",
+                              }}
                             >
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                              {idx + 1}
+                            </TableCell>
+
+                            {/* Thumbnail */}
+                            <TableCell>
+                              <MediaThumbnail
+                                blobId={entry.blobId}
+                                fileName={entry.fileName}
+                                onClick={() =>
+                                  setPreviewEntry({
+                                    blobId: entry.blobId,
+                                    fileName: entry.fileName,
+                                    uploaderName: entry.uploaderName,
+                                  })
+                                }
+                              />
+                            </TableCell>
+
+                            {/* Uploader */}
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                                  }}
+                                >
+                                  {entry.uploaderName.charAt(0).toUpperCase()}
+                                </div>
+                                <span
+                                  className="text-sm font-medium"
+                                  style={{ color: "oklch(var(--hero-brown))" }}
+                                >
+                                  {entry.uploaderName}
+                                </span>
+                              </div>
+                            </TableCell>
+
+                            {/* File Name */}
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                {getFileTypeIcon(entry.fileName)}
+                                <span
+                                  className="text-sm max-w-[180px] truncate block"
+                                  style={{ color: "oklch(var(--foreground))" }}
+                                  title={entry.fileName}
+                                >
+                                  {entry.fileName}
+                                </span>
+                              </div>
+                            </TableCell>
+
+                            {/* Timestamp */}
+                            <TableCell
+                              className="text-xs whitespace-nowrap"
+                              style={{
+                                color: "oklch(var(--muted-foreground))",
+                              }}
+                            >
+                              {formatTimestamp(entry.timestamp)}
+                            </TableCell>
+
+                            {/* Actions */}
+                            <TableCell>
+                              <div className="flex items-center justify-end gap-1.5">
+                                {/* View in new tab */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleViewFile(entry.blobId)}
+                                  className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
+                                  title="Open in new tab"
+                                  data-ocid={`admin.uploads.view_button.${idx + 1}`}
+                                >
+                                  <Eye
+                                    className="w-3.5 h-3.5"
+                                    style={{
+                                      color: "oklch(var(--coral-primary))",
+                                    }}
+                                  />
+                                </Button>
+
+                                {/* Download */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleDownload(entry.blobId, entry.fileName)
+                                  }
+                                  disabled={downloadingIds.has(entry.blobId)}
+                                  className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
+                                  title="Download"
+                                  data-ocid={`admin.uploads.download_button.${idx + 1}`}
+                                >
+                                  {downloadingIds.has(entry.blobId) ? (
+                                    <Loader2
+                                      className="w-3.5 h-3.5 animate-spin"
+                                      style={{
+                                        color: "oklch(var(--muted-foreground))",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Download
+                                      className="w-3.5 h-3.5"
+                                      style={{
+                                        color: "oklch(var(--coral-primary))",
+                                      }}
+                                    />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                      </AnimatePresence>
                     </TableBody>
                   </Table>
                 </div>
@@ -534,6 +852,12 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
           </a>
         </div>
       </footer>
+
+      {/* Media Preview Modal */}
+      <MediaPreviewModal
+        entry={previewEntry}
+        onClose={() => setPreviewEntry(null)}
+      />
     </div>
   );
 }
