@@ -14,7 +14,6 @@ import Nat "mo:core/Nat";
 actor {
   include MixinStorage();
 
-  // Initialize authorization state for RBAC
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -42,7 +41,6 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   var uploadEntries = Array.empty<UploadEntry>();
 
-  // User profile management functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -64,29 +62,34 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Public upload endpoint - NO authentication required
-  public shared ({ caller }) func uploadMemory(uploaderName : Text, file : Storage.ExternalBlob, fileName : Text) : async () {
+  // file is ExternalBlob: UTF-8 bytes of "!caf!sha256:..." sentinel string
+  // We decode and store this string directly as blobId so the frontend can reconstruct the URL
+  public shared func uploadMemory(uploaderName : Text, file : Storage.ExternalBlob, fileName : Text) : async () {
     if (uploaderName.size() == 0 or fileName.size() == 0) {
       Runtime.trap("Uploader name and file name are required");
+    };
+
+    // Decode UTF-8 bytes to get the sentinel string "!caf!sha256:..."
+    let blobId = switch (file.decodeUtf8()) {
+      case (?text) { text };
+      case null { Runtime.trap("Invalid UTF-8 in blob hash") };
     };
 
     let newEntry : UploadEntry = {
       uploaderName;
       fileName;
       timestamp = Time.now();
-      blobId = fileName;
+      blobId;
     };
 
     let newEntries = Array.empty<UploadEntry>().concat(uploadEntries).concat([newEntry]);
     uploadEntries := newEntries;
   };
 
-  // Public endpoint to list all upload entries (protected by frontend password)
   public query func getAllUploads() : async [UploadEntry] {
     uploadEntries;
   };
 
-  // Public endpoint to get stats (protected by frontend password)
   public query func getStats() : async (Nat, Nat) {
     let totalUploads = uploadEntries.size();
     let uniqueUploaderNames = Set.empty<Text>();

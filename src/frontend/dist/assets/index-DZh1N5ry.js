@@ -39752,17 +39752,17 @@ async function createActorWithConfig(options) {
     config.project_id,
     agent
   );
-  const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
+  const MOTOKO_DEDUPLICATION_SENTINEL2 = "!caf!";
   const uploadFile = async (file) => {
     const { hash } = await storageClient.putFile(
       await file.getBytes(),
       file.onProgress
     );
-    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL + hash);
+    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL2 + hash);
   };
   const downloadFile = async (bytes) => {
     const hashWithPrefix = new TextDecoder().decode(new Uint8Array(bytes));
-    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
+    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL2.length);
     const url = await storageClient.getDirectURL(hash);
     return ExternalBlob.fromURL(url);
   };
@@ -41389,6 +41389,32 @@ function useUploadMemory() {
     }
   });
 }
+const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
+let _storageClientPromise = null;
+async function getStorageClient() {
+  if (!_storageClientPromise) {
+    _storageClientPromise = loadConfig().then((config) => {
+      const agent = new HttpAgent({ host: config.backend_host });
+      return new StorageClient(
+        config.bucket_name,
+        config.storage_gateway_url,
+        config.backend_canister_id,
+        config.project_id,
+        agent
+      );
+    });
+  }
+  return _storageClientPromise;
+}
+async function getDirectUrlFromBlobId(blobId) {
+  if (!blobId) return blobId;
+  if (!blobId.startsWith(MOTOKO_DEDUPLICATION_SENTINEL)) {
+    return blobId;
+  }
+  const hash = blobId.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
+  const storageClient = await getStorageClient();
+  return storageClient.getDirectURL(hash);
+}
 const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
 const ADMIN_PASSWORD = "Kaushal@123";
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
@@ -41446,7 +41472,16 @@ function MediaThumbnail({
   onClick
 }) {
   const [loaded, setLoaded] = reactExports.useState(false);
-  const url = ExternalBlob.fromURL(blobId).getDirectURL();
+  const [url, setUrl] = reactExports.useState(null);
+  reactExports.useEffect(() => {
+    let cancelled = false;
+    getDirectUrlFromBlobId(blobId).then((resolved) => {
+      if (!cancelled) setUrl(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [blobId]);
   if (isImage(fileName)) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "button",
@@ -41458,8 +41493,8 @@ function MediaThumbnail({
         "aria-label": "Preview image",
         "data-ocid": "admin.uploads.preview_button",
         children: [
-          !loaded && /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0 rounded-lg" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
+          (!loaded || !url) && /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0 rounded-lg" }),
+          url && /* @__PURE__ */ jsxRuntimeExports.jsx(
             "img",
             {
               src: url,
@@ -41470,7 +41505,7 @@ function MediaThumbnail({
               onError: () => setLoaded(true)
             }
           ),
-          loaded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" }) })
+          loaded && url && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" }) })
         ]
       }
     );
@@ -41486,7 +41521,7 @@ function MediaThumbnail({
         "aria-label": "Preview video",
         "data-ocid": "admin.uploads.preview_button",
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
+          url ? /* @__PURE__ */ jsxRuntimeExports.jsx(
             "video",
             {
               src: url,
@@ -41496,7 +41531,7 @@ function MediaThumbnail({
               style: { pointerEvents: "none" },
               children: /* @__PURE__ */ jsxRuntimeExports.jsx("track", { kind: "captions" })
             }
-          ),
+          ) : /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0 rounded-lg" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             "div",
             {
@@ -41526,8 +41561,21 @@ function MediaPreviewModal({
   entry,
   onClose
 }) {
+  const [url, setUrl] = reactExports.useState(null);
+  reactExports.useEffect(() => {
+    if (!entry) {
+      setUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getDirectUrlFromBlobId(entry.blobId).then((resolved) => {
+      if (!cancelled) setUrl(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [entry]);
   if (!entry) return null;
-  const url = ExternalBlob.fromURL(entry.blobId).getDirectURL();
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: !!entry, onOpenChange: (open) => !open && onClose(), children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     DialogContent,
     {
@@ -41582,7 +41630,7 @@ function MediaPreviewModal({
           {
             className: "flex items-center justify-center p-4",
             style: { minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" },
-            children: isImage(entry.fileName) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            children: !url ? /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "w-full h-64 rounded-lg" }) : isImage(entry.fileName) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
               "img",
               {
                 src: url,
@@ -41631,15 +41679,14 @@ function AdminPage({ onNavigateHome }) {
   const { data: stats } = useGetStats();
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
-  const handleViewFile = (blobId) => {
-    const blob = ExternalBlob.fromURL(blobId);
-    window.open(blob.getDirectURL(), "_blank");
+  const handleViewFile = async (blobId) => {
+    const url = await getDirectUrlFromBlobId(blobId);
+    window.open(url, "_blank");
   };
   const handleDownload = async (blobId, fileName) => {
     setDownloadingIds((prev) => new Set(prev).add(blobId));
     try {
-      const blob = ExternalBlob.fromURL(blobId);
-      const url = blob.getDirectURL();
+      const url = await getDirectUrlFromBlobId(blobId);
       const response = await fetch(url);
       const data = await response.blob();
       const objectUrl = URL.createObjectURL(data);

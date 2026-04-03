@@ -34,9 +34,9 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
-import { ExternalBlob } from "../backend";
+import { useEffect, useState } from "react";
 import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
+import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
 const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
 const ADMIN_PASSWORD = "Kaushal@123";
@@ -112,7 +112,17 @@ function MediaThumbnail({
   onClick: () => void;
 }) {
   const [loaded, setLoaded] = useState(false);
-  const url = ExternalBlob.fromURL(blobId).getDirectURL();
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getDirectUrlFromBlobId(blobId).then((resolved) => {
+      if (!cancelled) setUrl(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [blobId]);
 
   if (isImage(fileName)) {
     return (
@@ -124,16 +134,20 @@ function MediaThumbnail({
         aria-label="Preview image"
         data-ocid="admin.uploads.preview_button"
       >
-        {!loaded && <Skeleton className="absolute inset-0 rounded-lg" />}
-        <img
-          src={url}
-          alt={fileName}
-          className="w-full h-full object-cover rounded-lg"
-          style={{ display: loaded ? "block" : "none" }}
-          onLoad={() => setLoaded(true)}
-          onError={() => setLoaded(true)}
-        />
-        {loaded && (
+        {(!loaded || !url) && (
+          <Skeleton className="absolute inset-0 rounded-lg" />
+        )}
+        {url && (
+          <img
+            src={url}
+            alt={fileName}
+            className="w-full h-full object-cover rounded-lg"
+            style={{ display: loaded ? "block" : "none" }}
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
+          />
+        )}
+        {loaded && url && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg">
             <Eye className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" />
           </div>
@@ -152,15 +166,19 @@ function MediaThumbnail({
         aria-label="Preview video"
         data-ocid="admin.uploads.preview_button"
       >
-        <video
-          src={url}
-          muted
-          preload="metadata"
-          className="w-full h-full object-cover rounded-lg"
-          style={{ pointerEvents: "none" }}
-        >
-          <track kind="captions" />
-        </video>
+        {url ? (
+          <video
+            src={url}
+            muted
+            preload="metadata"
+            className="w-full h-full object-cover rounded-lg"
+            style={{ pointerEvents: "none" }}
+          >
+            <track kind="captions" />
+          </video>
+        ) : (
+          <Skeleton className="absolute inset-0 rounded-lg" />
+        )}
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -195,8 +213,23 @@ function MediaPreviewModal({
   entry: PreviewEntry | null;
   onClose: () => void;
 }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!entry) {
+      setUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getDirectUrlFromBlobId(entry.blobId).then((resolved) => {
+      if (!cancelled) setUrl(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [entry]);
+
   if (!entry) return null;
-  const url = ExternalBlob.fromURL(entry.blobId).getDirectURL();
 
   return (
     <Dialog open={!!entry} onOpenChange={(open) => !open && onClose()}>
@@ -243,7 +276,9 @@ function MediaPreviewModal({
           className="flex items-center justify-center p-4"
           style={{ minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" }}
         >
-          {isImage(entry.fileName) ? (
+          {!url ? (
+            <Skeleton className="w-full h-64 rounded-lg" />
+          ) : isImage(entry.fileName) ? (
             <img
               src={url}
               alt={entry.fileName}
@@ -295,16 +330,15 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
 
-  const handleViewFile = (blobId: string) => {
-    const blob = ExternalBlob.fromURL(blobId);
-    window.open(blob.getDirectURL(), "_blank");
+  const handleViewFile = async (blobId: string) => {
+    const url = await getDirectUrlFromBlobId(blobId);
+    window.open(url, "_blank");
   };
 
   const handleDownload = async (blobId: string, fileName: string) => {
     setDownloadingIds((prev) => new Set(prev).add(blobId));
     try {
-      const blob = ExternalBlob.fromURL(blobId);
-      const url = blob.getDirectURL();
+      const url = await getDirectUrlFromBlobId(blobId);
       const response = await fetch(url);
       const data = await response.blob();
       const objectUrl = URL.createObjectURL(data);
