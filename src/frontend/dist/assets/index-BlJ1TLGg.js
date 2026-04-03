@@ -39091,6 +39091,7 @@ Service({
   "_caffeineStorageUpdateGatewayPrincipals": Func([], [], []),
   "_initializeAccessControlWithSecret": Func([Text], [], []),
   "assignCallerUserRole": Func([Principal2, UserRole], [], []),
+  "deleteUpload": Func([Text], [], []),
   "getAllUploads": Func([], [Vec(UploadEntry)], ["query"]),
   "getCallerUserProfile": Func([], [Opt(UserProfile)], ["query"]),
   "getCallerUserRole": Func([], [UserRole], ["query"]),
@@ -39158,6 +39159,7 @@ const idlFactory = ({ IDL: IDL2 }) => {
     "_caffeineStorageUpdateGatewayPrincipals": IDL2.Func([], [], []),
     "_initializeAccessControlWithSecret": IDL2.Func([IDL2.Text], [], []),
     "assignCallerUserRole": IDL2.Func([IDL2.Principal, UserRole2], [], []),
+    "deleteUpload": IDL2.Func([IDL2.Text], [], []),
     "getAllUploads": IDL2.Func([], [IDL2.Vec(UploadEntry2)], ["query"]),
     "getCallerUserProfile": IDL2.Func([], [IDL2.Opt(UserProfile2)], ["query"]),
     "getCallerUserRole": IDL2.Func([], [UserRole2], ["query"]),
@@ -39427,6 +39429,20 @@ class Backend {
       }
     } else {
       const result = await this.actor.isCallerAdmin();
+      return result;
+    }
+  }
+  async deleteUpload(arg0) {
+    if (this.processError) {
+      try {
+        const result = await this.actor.deleteUpload(arg0);
+        return result;
+      } catch (e) {
+        this.processError(e);
+        throw new Error("unreachable");
+      }
+    } else {
+      const result = await this.actor.deleteUpload(arg0);
       return result;
     }
   }

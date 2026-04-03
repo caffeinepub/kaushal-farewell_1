@@ -378,7 +378,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setDeletingIds((prev) => new Set(prev).add(blobId));
     try {
       if (actor) {
-        await (actor as any).deleteUpload(blobId);
+        await actor.deleteUpload(blobId);
         await refetch();
       }
     } finally {
