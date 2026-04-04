@@ -48,8 +48,8 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { UploadEntry } from "../backend";
 import { useActor } from "../hooks/useActor";
-import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
 import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
@@ -337,19 +337,42 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
+  // Local data state — fetched only after login
+  const [uploads, setUploads] = useState<UploadEntry[] | null>(null);
+  const [stats, setStats] = useState<[bigint, bigint] | null>(null);
+  const [uploadsLoading, setUploadsLoading] = useState(false);
+
   const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { actor } = useActor();
 
-  const {
-    data: uploads,
-    isLoading: uploadsLoading,
-    refetch,
-  } = useGetAllUploads();
-  const { data: stats } = useGetStats();
-
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
+
+  // Fetch admin data — only called after login
+  const fetchAdminData = useCallback(async () => {
+    if (!actor) return;
+    setUploadsLoading(true);
+    try {
+      const [fetchedUploads, fetchedStats] = await Promise.all([
+        actor.getAllUploads(),
+        actor.getStats(),
+      ]);
+      setUploads(fetchedUploads);
+      setStats(fetchedStats);
+    } catch {
+      toast.error("Failed to load uploads. Please refresh.");
+    } finally {
+      setUploadsLoading(false);
+    }
+  }, [actor]);
+
+  // Load data once logged in and actor is ready
+  useEffect(() => {
+    if (isLoggedIn && actor !== null) {
+      fetchAdminData();
+    }
+  }, [isLoggedIn, actor, fetchAdminData]);
 
   // Session timeout
   const resetSessionTimer = useCallback(() => {
@@ -358,6 +381,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       setIsLoggedIn(false);
       setEmail("");
       setPassword("");
+      setUploads(null);
+      setStats(null);
       toast.error("Session expired. Please log in again.");
     }, SESSION_TIMEOUT_MS);
   }, []);
@@ -425,7 +450,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     try {
       if (actor) {
         await actor.deleteUpload(blobId);
-        await refetch();
+        await fetchAdminData();
       }
     } finally {
       setDeletingIds((prev) => {
@@ -439,9 +464,16 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockoutUntil) return;
+
+    // Guard: actor must be ready before attempting login
+    if (!actor) {
+      setLoginError("Still connecting, please wait a moment and try again.");
+      return;
+    }
+
     setIsLoginLoading(true);
     try {
-      const success = await actor?.adminLogin(password);
+      const success = await actor.adminLogin(password);
       if (success) {
         setIsLoggedIn(true);
         setLoginError("");
@@ -475,6 +507,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setLoginError("");
     setFailedAttempts(0);
     setLockoutUntil(null);
+    setUploads(null);
+    setStats(null);
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
 
@@ -627,7 +661,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
                 <Button
                   type="submit"
-                  disabled={!!lockoutUntil || isLoginLoading}
+                  disabled={!!lockoutUntil || isLoginLoading || !actor}
                   className="w-full rounded-xl font-semibold text-white mt-2"
                   style={{
                     background:
@@ -635,7 +669,12 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   }}
                   data-ocid="admin.login.submit_button"
                 >
-                  {isLoginLoading ? (
+                  {!actor ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : isLoginLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Signing in...
@@ -745,7 +784,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => refetch()}
+                  onClick={() => fetchAdminData()}
                   className="gap-2 text-xs"
                   data-ocid="admin.refresh.button"
                 >

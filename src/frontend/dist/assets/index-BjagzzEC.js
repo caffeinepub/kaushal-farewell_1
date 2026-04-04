@@ -41670,50 +41670,6 @@ function useActor() {
     isFetching: actorQuery.isFetching
   };
 }
-function useGetAllUploads() {
-  const { actor } = useActor();
-  return useQuery({
-    queryKey: ["allUploads"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllUploads();
-    },
-    enabled: !!actor
-  });
-}
-function useGetStats() {
-  const { actor } = useActor();
-  return useQuery({
-    queryKey: ["stats"],
-    queryFn: async () => {
-      if (!actor) return [0n, 0n];
-      return actor.getStats();
-    },
-    enabled: !!actor
-  });
-}
-function useUploadMemory() {
-  const { actor } = useActor();
-  const queryClient2 = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      uploaderName,
-      file,
-      fileName,
-      onProgress
-    }) => {
-      if (!actor) throw new Error("Actor not available");
-      const arrayBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress(onProgress);
-      await actor.uploadMemory(uploaderName, blob, fileName);
-    },
-    onSuccess: () => {
-      queryClient2.invalidateQueries({ queryKey: ["allUploads"] });
-      queryClient2.invalidateQueries({ queryKey: ["stats"] });
-    }
-  });
-}
 const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
 let _storageClientPromise = null;
 async function getStorageClient() {
@@ -42000,22 +41956,42 @@ function AdminPage({ onNavigateHome }) {
   const [previewEntry, setPreviewEntry] = reactExports.useState(null);
   const [downloadingIds, setDownloadingIds] = reactExports.useState(/* @__PURE__ */ new Set());
   const [deletingIds, setDeletingIds] = reactExports.useState(/* @__PURE__ */ new Set());
+  const [uploads, setUploads] = reactExports.useState(null);
+  const [stats, setStats] = reactExports.useState(null);
+  const [uploadsLoading, setUploadsLoading] = reactExports.useState(false);
   const sessionTimerRef = reactExports.useRef(null);
   const { actor } = useActor();
-  const {
-    data: uploads,
-    isLoading: uploadsLoading,
-    refetch
-  } = useGetAllUploads();
-  const { data: stats } = useGetStats();
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
+  const fetchAdminData = reactExports.useCallback(async () => {
+    if (!actor) return;
+    setUploadsLoading(true);
+    try {
+      const [fetchedUploads, fetchedStats] = await Promise.all([
+        actor.getAllUploads(),
+        actor.getStats()
+      ]);
+      setUploads(fetchedUploads);
+      setStats(fetchedStats);
+    } catch {
+      ue.error("Failed to load uploads. Please refresh.");
+    } finally {
+      setUploadsLoading(false);
+    }
+  }, [actor]);
+  reactExports.useEffect(() => {
+    if (isLoggedIn && actor !== null) {
+      fetchAdminData();
+    }
+  }, [isLoggedIn, actor, fetchAdminData]);
   const resetSessionTimer = reactExports.useCallback(() => {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     sessionTimerRef.current = setTimeout(() => {
       setIsLoggedIn(false);
       setEmail("");
       setPassword("");
+      setUploads(null);
+      setStats(null);
       ue.error("Session expired. Please log in again.");
     }, SESSION_TIMEOUT_MS);
   }, []);
@@ -42076,7 +42052,7 @@ function AdminPage({ onNavigateHome }) {
     try {
       if (actor) {
         await actor.deleteUpload(blobId);
-        await refetch();
+        await fetchAdminData();
       }
     } finally {
       setDeletingIds((prev) => {
@@ -42089,9 +42065,13 @@ function AdminPage({ onNavigateHome }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (lockoutUntil) return;
+    if (!actor) {
+      setLoginError("Still connecting, please wait a moment and try again.");
+      return;
+    }
     setIsLoginLoading(true);
     try {
-      const success = await (actor == null ? void 0 : actor.adminLogin(password));
+      const success = await actor.adminLogin(password);
       if (success) {
         setIsLoggedIn(true);
         setLoginError("");
@@ -42122,6 +42102,8 @@ function AdminPage({ onNavigateHome }) {
     setLoginError("");
     setFailedAttempts(0);
     setLockoutUntil(null);
+    setUploads(null);
+    setStats(null);
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -42285,13 +42267,16 @@ function AdminPage({ onNavigateHome }) {
                       Button,
                       {
                         type: "submit",
-                        disabled: !!lockoutUntil || isLoginLoading,
+                        disabled: !!lockoutUntil || isLoginLoading || !actor,
                         className: "w-full rounded-xl font-semibold text-white mt-2",
                         style: {
                           background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
                         },
                         "data-ocid": "admin.login.submit_button",
-                        children: isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                        children: !actor ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
+                          "Connecting..."
+                        ] }) : isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                           /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
                           "Signing in..."
                         ] }) : "Sign In"
@@ -42424,7 +42409,7 @@ function AdminPage({ onNavigateHome }) {
                         {
                           variant: "ghost",
                           size: "sm",
-                          onClick: () => refetch(),
+                          onClick: () => fetchAdminData(),
                           className: "gap-2 text-xs",
                           "data-ocid": "admin.refresh.button",
                           children: [
@@ -42878,6 +42863,28 @@ function Textarea({ className, ...props }) {
       ...props
     }
   );
+}
+function useUploadMemory() {
+  const { actor } = useActor();
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      uploaderName,
+      file,
+      fileName,
+      onProgress
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress(onProgress);
+      await actor.uploadMemory(uploaderName, blob, fileName);
+    },
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["allUploads"] });
+      queryClient2.invalidateQueries({ queryKey: ["stats"] });
+    }
+  });
 }
 function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;

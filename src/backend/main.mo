@@ -4,7 +4,7 @@ import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Migration "migration";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import Storage "blob-storage/Storage";
@@ -12,7 +12,7 @@ import MixinStorage "blob-storage/Mixin";
 import Set "mo:core/Set";
 import Nat "mo:core/Nat";
 
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 
