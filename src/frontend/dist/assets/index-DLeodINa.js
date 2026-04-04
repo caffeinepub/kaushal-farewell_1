@@ -39090,12 +39090,13 @@ Service({
   ),
   "_caffeineStorageUpdateGatewayPrincipals": Func([], [], []),
   "_initializeAccessControlWithSecret": Func([Text], [], []),
+  "adminLogin": Func([Text], [Bool], []),
   "assignCallerUserRole": Func([Principal2, UserRole], [], []),
   "deleteUpload": Func([Text], [], []),
-  "getAllUploads": Func([], [Vec(UploadEntry)], ["query"]),
+  "getAllUploads": Func([], [Vec(UploadEntry)], []),
   "getCallerUserProfile": Func([], [Opt(UserProfile)], ["query"]),
   "getCallerUserRole": Func([], [UserRole], ["query"]),
-  "getStats": Func([], [Nat, Nat], ["query"]),
+  "getStats": Func([], [Nat, Nat], []),
   "getUserProfile": Func(
     [Principal2],
     [Opt(UserProfile)],
@@ -39158,12 +39159,13 @@ const idlFactory = ({ IDL: IDL2 }) => {
     ),
     "_caffeineStorageUpdateGatewayPrincipals": IDL2.Func([], [], []),
     "_initializeAccessControlWithSecret": IDL2.Func([IDL2.Text], [], []),
+    "adminLogin": IDL2.Func([IDL2.Text], [IDL2.Bool], []),
     "assignCallerUserRole": IDL2.Func([IDL2.Principal, UserRole2], [], []),
     "deleteUpload": IDL2.Func([IDL2.Text], [], []),
-    "getAllUploads": IDL2.Func([], [IDL2.Vec(UploadEntry2)], ["query"]),
+    "getAllUploads": IDL2.Func([], [IDL2.Vec(UploadEntry2)], []),
     "getCallerUserProfile": IDL2.Func([], [IDL2.Opt(UserProfile2)], ["query"]),
     "getCallerUserRole": IDL2.Func([], [UserRole2], ["query"]),
-    "getStats": IDL2.Func([], [IDL2.Nat, IDL2.Nat], ["query"]),
+    "getStats": IDL2.Func([], [IDL2.Nat, IDL2.Nat], []),
     "getUserProfile": IDL2.Func(
       [IDL2.Principal],
       [IDL2.Opt(UserProfile2)],
@@ -39328,6 +39330,20 @@ class Backend {
       return result;
     }
   }
+  async adminLogin(arg0) {
+    if (this.processError) {
+      try {
+        const result = await this.actor.adminLogin(arg0);
+        return result;
+      } catch (e) {
+        this.processError(e);
+        throw new Error("unreachable");
+      }
+    } else {
+      const result = await this.actor.adminLogin(arg0);
+      return result;
+    }
+  }
   async assignCallerUserRole(arg0, arg1) {
     if (this.processError) {
       try {
@@ -39339,6 +39355,20 @@ class Backend {
       }
     } else {
       const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n8(this._uploadFile, this._downloadFile, arg1));
+      return result;
+    }
+  }
+  async deleteUpload(arg0) {
+    if (this.processError) {
+      try {
+        const result = await this.actor.deleteUpload(arg0);
+        return result;
+      } catch (e) {
+        this.processError(e);
+        throw new Error("unreachable");
+      }
+    } else {
+      const result = await this.actor.deleteUpload(arg0);
       return result;
     }
   }
@@ -39429,20 +39459,6 @@ class Backend {
       }
     } else {
       const result = await this.actor.isCallerAdmin();
-      return result;
-    }
-  }
-  async deleteUpload(arg0) {
-    if (this.processError) {
-      try {
-        const result = await this.actor.deleteUpload(arg0);
-        return result;
-      } catch (e) {
-        this.processError(e);
-        throw new Error("unreachable");
-      }
-    } else {
-      const result = await this.actor.deleteUpload(arg0);
       return result;
     }
   }
@@ -41724,10 +41740,9 @@ async function getDirectUrlFromBlobId(blobId) {
   const storageClient = await getStorageClient();
   return storageClient.getDirectURL(hash);
 }
-const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
-const ADMIN_PASSWORD = "Kaushal@123";
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
+const SESSION_TIMEOUT_MS = 30 * 60 * 1e3;
 function getFileExt(fileName) {
   var _a3;
   return ((_a3 = fileName.split(".").pop()) == null ? void 0 : _a3.toLowerCase()) ?? "";
@@ -41978,9 +41993,14 @@ function AdminPage({ onNavigateHome }) {
   const [email, setEmail] = reactExports.useState("");
   const [password, setPassword] = reactExports.useState("");
   const [loginError, setLoginError] = reactExports.useState("");
+  const [isLoginLoading, setIsLoginLoading] = reactExports.useState(false);
+  const [failedAttempts, setFailedAttempts] = reactExports.useState(0);
+  const [lockoutUntil, setLockoutUntil] = reactExports.useState(null);
+  const [lockoutSecondsLeft, setLockoutSecondsLeft] = reactExports.useState(0);
   const [previewEntry, setPreviewEntry] = reactExports.useState(null);
   const [downloadingIds, setDownloadingIds] = reactExports.useState(/* @__PURE__ */ new Set());
   const [deletingIds, setDeletingIds] = reactExports.useState(/* @__PURE__ */ new Set());
+  const sessionTimerRef = reactExports.useRef(null);
   const { actor } = useActor();
   const {
     data: uploads,
@@ -41990,6 +42010,41 @@ function AdminPage({ onNavigateHome }) {
   const { data: stats } = useGetStats();
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
+  const resetSessionTimer = reactExports.useCallback(() => {
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    sessionTimerRef.current = setTimeout(() => {
+      setIsLoggedIn(false);
+      setEmail("");
+      setPassword("");
+      ue.error("Session expired. Please log in again.");
+    }, SESSION_TIMEOUT_MS);
+  }, []);
+  reactExports.useEffect(() => {
+    if (!isLoggedIn) return;
+    const events2 = ["mousemove", "keydown", "click", "scroll"];
+    const handler = () => resetSessionTimer();
+    for (const ev of events2) window.addEventListener(ev, handler);
+    return () => {
+      for (const ev of events2) window.removeEventListener(ev, handler);
+      if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    };
+  }, [isLoggedIn, resetSessionTimer]);
+  reactExports.useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1e3);
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setLockoutSecondsLeft(0);
+        setLoginError("");
+        setFailedAttempts(0);
+      } else {
+        setLockoutSecondsLeft(remaining);
+        setLoginError(`Too many failed attempts. Try again in ${remaining}s.`);
+      }
+    }, 1e3);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
   const handleViewFile = async (blobId) => {
     const url = await getDirectUrlFromBlobId(blobId);
     window.open(url, "_blank");
@@ -42031,13 +42086,33 @@ function AdminPage({ onNavigateHome }) {
       });
     }
   };
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-      setLoginError("");
-    } else {
-      setLoginError("Invalid email or password.");
+    if (lockoutUntil) return;
+    setIsLoginLoading(true);
+    try {
+      const success = await (actor == null ? void 0 : actor.adminLogin(password));
+      if (success) {
+        setIsLoggedIn(true);
+        setLoginError("");
+        setFailedAttempts(0);
+        resetSessionTimer();
+      } else {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= 5) {
+          setLockoutUntil(Date.now() + 3e4);
+          setLoginError("Too many failed attempts. Please wait 30 seconds.");
+        } else {
+          setLoginError(
+            `Invalid password. ${5 - newAttempts} attempt${5 - newAttempts === 1 ? "" : "s"} remaining.`
+          );
+        }
+      }
+    } catch {
+      setLoginError("Connection error. Please try again.");
+    } finally {
+      setIsLoginLoading(false);
     }
   };
   const handleSignOut = () => {
@@ -42045,6 +42120,9 @@ function AdminPage({ onNavigateHome }) {
     setEmail("");
     setPassword("");
     setLoginError("");
+    setFailedAttempts(0);
+    setLockoutUntil(null);
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
@@ -42163,7 +42241,7 @@ function AdminPage({ onNavigateHome }) {
                           value: email,
                           onChange: (e) => setEmail(e.target.value),
                           placeholder: "admin@example.com",
-                          required: true,
+                          disabled: !!lockoutUntil,
                           className: "rounded-xl border-border/60 focus:border-coral/60",
                           "data-ocid": "admin.login.input"
                         }
@@ -42188,6 +42266,7 @@ function AdminPage({ onNavigateHome }) {
                           onChange: (e) => setPassword(e.target.value),
                           placeholder: "••••••••",
                           required: true,
+                          disabled: !!lockoutUntil,
                           className: "rounded-xl border-border/60 focus:border-coral/60",
                           "data-ocid": "admin.login.password"
                         }
@@ -42206,12 +42285,16 @@ function AdminPage({ onNavigateHome }) {
                       Button,
                       {
                         type: "submit",
+                        disabled: !!lockoutUntil || isLoginLoading,
                         className: "w-full rounded-xl font-semibold text-white mt-2",
                         style: {
                           background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
                         },
                         "data-ocid": "admin.login.submit_button",
-                        children: "Sign In"
+                        children: isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
+                          "Signing in..."
+                        ] }) : "Sign In"
                       }
                     )
                   ] })

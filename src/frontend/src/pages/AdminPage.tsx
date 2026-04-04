@@ -46,16 +46,15 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useActor } from "../hooks/useActor";
 import { useGetAllUploads, useGetStats } from "../hooks/useQueries";
 import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
-const ADMIN_EMAIL = "kaushalfarewell@gmail.com";
-const ADMIN_PASSWORD = "Kaushal@123";
-
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 function getFileExt(fileName: string): string {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -330,9 +329,15 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutSecondsLeft, setLockoutSecondsLeft] = useState(0);
   const [previewEntry, setPreviewEntry] = useState<PreviewEntry | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { actor } = useActor();
 
@@ -345,6 +350,47 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
+
+  // Session timeout
+  const resetSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    sessionTimerRef.current = setTimeout(() => {
+      setIsLoggedIn(false);
+      setEmail("");
+      setPassword("");
+      toast.error("Session expired. Please log in again.");
+    }, SESSION_TIMEOUT_MS);
+  }, []);
+
+  // Activity listeners to reset session timer
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const events = ["mousemove", "keydown", "click", "scroll"] as const;
+    const handler = () => resetSessionTimer();
+    for (const ev of events) window.addEventListener(ev, handler);
+    return () => {
+      for (const ev of events) window.removeEventListener(ev, handler);
+      if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    };
+  }, [isLoggedIn, resetSessionTimer]);
+
+  // Lockout countdown
+  useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setLockoutSecondsLeft(0);
+        setLoginError("");
+        setFailedAttempts(0);
+      } else {
+        setLockoutSecondsLeft(remaining);
+        setLoginError(`Too many failed attempts. Try again in ${remaining}s.`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   const handleViewFile = async (blobId: string) => {
     const url = await getDirectUrlFromBlobId(blobId);
@@ -390,13 +436,35 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-      setLoginError("");
-    } else {
-      setLoginError("Invalid email or password.");
+    if (lockoutUntil) return;
+    setIsLoginLoading(true);
+    try {
+      const success = await actor?.adminLogin(password);
+      if (success) {
+        setIsLoggedIn(true);
+        setLoginError("");
+        setFailedAttempts(0);
+        resetSessionTimer();
+      } else {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= 5) {
+          setLockoutUntil(Date.now() + 30_000); // 30s lockout
+          setLoginError("Too many failed attempts. Please wait 30 seconds.");
+        } else {
+          setLoginError(
+            `Invalid password. ${5 - newAttempts} attempt${
+              5 - newAttempts === 1 ? "" : "s"
+            } remaining.`,
+          );
+        }
+      }
+    } catch {
+      setLoginError("Connection error. Please try again.");
+    } finally {
+      setIsLoginLoading(false);
     }
   };
 
@@ -405,7 +473,13 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setEmail("");
     setPassword("");
     setLoginError("");
+    setFailedAttempts(0);
+    setLockoutUntil(null);
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
+
+  // suppress unused warning for lockoutSecondsLeft (used in effect)
+  void lockoutSecondsLeft;
 
   return (
     <div
@@ -514,7 +588,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
-                    required
+                    disabled={!!lockoutUntil}
                     className="rounded-xl border-border/60 focus:border-coral/60"
                     data-ocid="admin.login.input"
                   />
@@ -535,6 +609,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    disabled={!!lockoutUntil}
                     className="rounded-xl border-border/60 focus:border-coral/60"
                     data-ocid="admin.login.password"
                   />
@@ -552,6 +627,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
                 <Button
                   type="submit"
+                  disabled={!!lockoutUntil || isLoginLoading}
                   className="w-full rounded-xl font-semibold text-white mt-2"
                   style={{
                     background:
@@ -559,7 +635,14 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   }}
                   data-ocid="admin.login.submit_button"
                 >
-                  Sign In
+                  {isLoginLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </div>

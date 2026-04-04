@@ -49,6 +49,7 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'adminLogin' : ActorMethod<[string], boolean>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteUpload' : ActorMethod<[string], undefined>,
   'getAllUploads' : ActorMethod<[], Array<UploadEntry>>,

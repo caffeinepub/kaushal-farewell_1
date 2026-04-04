@@ -4,6 +4,7 @@ import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import Storage "blob-storage/Storage";
@@ -11,6 +12,7 @@ import MixinStorage "blob-storage/Mixin";
 import Set "mo:core/Set";
 import Nat "mo:core/Nat";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -40,6 +42,15 @@ actor {
 
   let userProfiles = Map.empty<Principal, UserProfile>();
   var uploadEntries = Array.empty<UploadEntry>();
+
+  public shared ({ caller }) func adminLogin(password : Text) : async Bool {
+    if (password == "Kaushal@123") {
+      AccessControl.assignRole(accessControlState, caller, caller, #admin);
+      true;
+    } else {
+      false;
+    };
+  };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -86,17 +97,24 @@ actor {
     uploadEntries := newEntries;
   };
 
-  public shared func deleteUpload(blobId : Text) : async () {
-    uploadEntries := uploadEntries.filter(func(e : UploadEntry) : Bool {
-      e.blobId != blobId
-    });
+  public shared ({ caller }) func deleteUpload(blobId : Text) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized");
+    };
+    uploadEntries := uploadEntries.filter(func(e : UploadEntry) : Bool { e.blobId != blobId });
   };
 
-  public query func getAllUploads() : async [UploadEntry] {
+  public shared ({ caller }) func getAllUploads() : async [UploadEntry] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized");
+    };
     uploadEntries;
   };
 
-  public query func getStats() : async (Nat, Nat) {
+  public shared ({ caller }) func getStats() : async (Nat, Nat) {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized");
+    };
     let totalUploads = uploadEntries.size();
     let uniqueUploaderNames = Set.empty<Text>();
     for (entry in uploadEntries.values()) {

@@ -29,6 +29,7 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    adminLogin(password: string): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteUpload(blobId: string): Promise<void>;
     getAllUploads(): Promise<Array<UploadEntry>>;
