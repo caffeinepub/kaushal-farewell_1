@@ -1,43 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { UploadEntry } from "../backend";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ExternalBlob } from "../backend";
 import { useActor } from "./useActor";
-
-export function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
-  return useQuery<boolean>({
-    queryKey: ["isCallerAdmin"],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useGetAllUploads() {
-  const { actor } = useActor();
-  return useQuery<UploadEntry[]>({
-    queryKey: ["allUploads"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllUploads();
-    },
-    enabled: !!actor,
-  });
-}
-
-export function useGetStats() {
-  const { actor } = useActor();
-  return useQuery<[bigint, bigint]>({
-    queryKey: ["stats"],
-    queryFn: async () => {
-      if (!actor) return [0n, 0n];
-      return actor.getStats();
-    },
-    enabled: !!actor,
-  });
-}
 
 export interface FileUploadProgress {
   fileName: string;

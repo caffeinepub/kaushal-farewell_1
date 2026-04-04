@@ -122,13 +122,13 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
-    adminLogin(password: string): Promise<boolean>;
+    adminLogin(password: string): Promise<string | null>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    deleteUpload(blobId: string): Promise<void>;
-    getAllUploads(): Promise<Array<UploadEntry>>;
+    deleteUpload(blobId: string, sessionToken: string): Promise<void>;
+    getAllUploads(sessionToken: string): Promise<Array<UploadEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getStats(): Promise<[bigint, bigint]>;
+    getStats(sessionToken: string): Promise<[bigint, bigint]>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
@@ -235,18 +235,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async adminLogin(arg0: string): Promise<boolean> {
+    async adminLogin(arg0: string): Promise<string | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.adminLogin(arg0);
-                return result;
+                return result.length === 0 ? null : result[0];
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.adminLogin(arg0);
-            return result;
+            return result.length === 0 ? null : result[0];
         }
     }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
@@ -263,31 +263,31 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async deleteUpload(arg0: string): Promise<void> {
+    async deleteUpload(arg0: string, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.deleteUpload(arg0);
+                const result = await this.actor.deleteUpload(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.deleteUpload(arg0);
+            const result = await this.actor.deleteUpload(arg0, arg1);
             return result;
         }
     }
-    async getAllUploads(): Promise<Array<UploadEntry>> {
+    async getAllUploads(arg0: string): Promise<Array<UploadEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllUploads();
+                const result = await this.actor.getAllUploads(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllUploads();
+            const result = await this.actor.getAllUploads(arg0);
             return result;
         }
     }
@@ -319,10 +319,10 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getStats(): Promise<[bigint, bigint]> {
+    async getStats(arg0: string): Promise<[bigint, bigint]> {
         if (this.processError) {
             try {
-                const result = await this.actor.getStats();
+                const result = await this.actor.getStats(arg0);
                 return [
                     result[0],
                     result[1]
@@ -332,7 +332,7 @@ export class Backend implements backendInterface {
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getStats();
+            const result = await this.actor.getStats(arg0);
             return [
                 result[0],
                 result[1]

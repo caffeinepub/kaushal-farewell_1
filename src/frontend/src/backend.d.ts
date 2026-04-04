@@ -29,13 +29,13 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    adminLogin(password: string): Promise<boolean>;
+    adminLogin(password: string): Promise<string | null>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    deleteUpload(blobId: string): Promise<void>;
-    getAllUploads(): Promise<Array<UploadEntry>>;
+    deleteUpload(blobId: string, sessionToken: string): Promise<void>;
+    getAllUploads(sessionToken: string): Promise<Array<UploadEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getStats(): Promise<[bigint, bigint]>;
+    getStats(sessionToken: string): Promise<[bigint, bigint]>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;

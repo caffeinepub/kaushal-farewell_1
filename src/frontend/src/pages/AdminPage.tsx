@@ -203,7 +203,6 @@ function MediaThumbnail({
     );
   }
 
-  // Generic file — small icon placeholder
   return (
     <div
       className="flex-shrink-0 rounded-lg border border-border/40 flex items-center justify-center"
@@ -326,6 +325,7 @@ function MediaPreviewModal({
 
 export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -350,35 +350,39 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
 
   // Fetch admin data — only called after login
-  const fetchAdminData = useCallback(async () => {
-    if (!actor) return;
-    setUploadsLoading(true);
-    try {
-      const [fetchedUploads, fetchedStats] = await Promise.all([
-        actor.getAllUploads(),
-        actor.getStats(),
-      ]);
-      setUploads(fetchedUploads);
-      setStats(fetchedStats);
-    } catch {
-      toast.error("Failed to load uploads. Please refresh.");
-    } finally {
-      setUploadsLoading(false);
-    }
-  }, [actor]);
+  const fetchAdminData = useCallback(
+    async (token: string) => {
+      if (!actor) return;
+      setUploadsLoading(true);
+      try {
+        const [fetchedUploads, fetchedStats] = await Promise.all([
+          actor.getAllUploads(token),
+          actor.getStats(token),
+        ]);
+        setUploads(fetchedUploads);
+        setStats(fetchedStats);
+      } catch {
+        toast.error("Failed to load uploads. Please refresh.");
+      } finally {
+        setUploadsLoading(false);
+      }
+    },
+    [actor],
+  );
 
   // Load data once logged in and actor is ready
   useEffect(() => {
-    if (isLoggedIn && actor !== null) {
-      fetchAdminData();
+    if (isLoggedIn && actor !== null && sessionToken) {
+      fetchAdminData(sessionToken);
     }
-  }, [isLoggedIn, actor, fetchAdminData]);
+  }, [isLoggedIn, actor, sessionToken, fetchAdminData]);
 
   // Session timeout
   const resetSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     sessionTimerRef.current = setTimeout(() => {
       setIsLoggedIn(false);
+      setSessionToken(null);
       setEmail("");
       setPassword("");
       setUploads(null);
@@ -446,11 +450,12 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   };
 
   const handleDelete = async (blobId: string) => {
+    if (!sessionToken) return;
     setDeletingIds((prev) => new Set(prev).add(blobId));
     try {
       if (actor) {
-        await actor.deleteUpload(blobId);
-        await fetchAdminData();
+        await actor.deleteUpload(blobId, sessionToken);
+        await fetchAdminData(sessionToken);
       }
     } finally {
       setDeletingIds((prev) => {
@@ -465,7 +470,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     e.preventDefault();
     if (lockoutUntil) return;
 
-    // Guard: actor must be ready before attempting login
     if (!actor) {
       setLoginError("Still connecting, please wait a moment and try again.");
       return;
@@ -473,8 +477,9 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
     setIsLoginLoading(true);
     try {
-      const success = await actor.adminLogin(password);
-      if (success) {
+      const token = await actor.adminLogin(password);
+      if (token !== null) {
+        setSessionToken(token);
         setIsLoggedIn(true);
         setLoginError("");
         setFailedAttempts(0);
@@ -483,7 +488,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         const newAttempts = failedAttempts + 1;
         setFailedAttempts(newAttempts);
         if (newAttempts >= 5) {
-          setLockoutUntil(Date.now() + 30_000); // 30s lockout
+          setLockoutUntil(Date.now() + 30_000);
           setLoginError("Too many failed attempts. Please wait 30 seconds.");
         } else {
           setLoginError(
@@ -502,6 +507,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   const handleSignOut = () => {
     setIsLoggedIn(false);
+    setSessionToken(null);
     setEmail("");
     setPassword("");
     setLoginError("");
@@ -512,7 +518,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
 
-  // suppress unused warning for lockoutSecondsLeft (used in effect)
   void lockoutSecondsLeft;
 
   return (
@@ -587,7 +592,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
               className="w-full max-w-sm rounded-2xl shadow-card p-8"
               style={{ backgroundColor: "oklch(1 0 0)" }}
             >
-              {/* Shield icon */}
               <div className="flex justify-center mb-6">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center"
@@ -784,7 +788,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => fetchAdminData()}
+                  onClick={() => sessionToken && fetchAdminData(sessionToken)}
                   className="gap-2 text-xs"
                   data-ocid="admin.refresh.button"
                 >
@@ -888,7 +892,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                             className="border-border/30 hover:bg-accent/30 transition-colors"
                             data-ocid={`admin.uploads.item.${idx + 1}`}
                           >
-                            {/* # */}
                             <TableCell
                               className="text-xs"
                               style={{
@@ -898,7 +901,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                               {idx + 1}
                             </TableCell>
 
-                            {/* Thumbnail */}
                             <TableCell>
                               <MediaThumbnail
                                 blobId={entry.blobId}
@@ -913,7 +915,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                               />
                             </TableCell>
 
-                            {/* Uploader */}
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div
@@ -934,7 +935,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                               </div>
                             </TableCell>
 
-                            {/* File Name */}
                             <TableCell>
                               <div className="flex items-center gap-1.5">
                                 {getFileTypeIcon(entry.fileName)}
@@ -948,7 +948,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                               </div>
                             </TableCell>
 
-                            {/* Timestamp */}
                             <TableCell
                               className="text-xs whitespace-nowrap"
                               style={{
@@ -958,10 +957,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                               {formatTimestamp(entry.timestamp)}
                             </TableCell>
 
-                            {/* Actions */}
                             <TableCell>
                               <div className="flex items-center justify-end gap-1.5">
-                                {/* View in new tab */}
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -978,7 +975,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                   />
                                 </Button>
 
-                                {/* Download */}
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1007,7 +1003,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                   )}
                                 </Button>
 
-                                {/* Delete */}
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
@@ -1084,7 +1079,10 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
           backgroundColor: "oklch(0.38 0.09 35 / 0.15)",
         }}
       >
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto text-center space-y-1">
+          <p className="text-xs" style={{ color: "oklch(0.45 0.06 40)" }}>
+            Created by Dhruv Dhameliya
+          </p>
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
@@ -1097,7 +1095,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         </div>
       </footer>
 
-      {/* Media Preview Modal */}
       <MediaPreviewModal
         entry={previewEntry}
         onClose={() => setPreviewEntry(null)}

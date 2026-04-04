@@ -39090,13 +39090,13 @@ Service({
   ),
   "_caffeineStorageUpdateGatewayPrincipals": Func([], [], []),
   "_initializeAccessControlWithSecret": Func([Text], [], []),
-  "adminLogin": Func([Text], [Bool], []),
+  "adminLogin": Func([Text], [Opt(Text)], []),
   "assignCallerUserRole": Func([Principal2, UserRole], [], []),
-  "deleteUpload": Func([Text], [], []),
-  "getAllUploads": Func([], [Vec(UploadEntry)], []),
+  "deleteUpload": Func([Text, Text], [], []),
+  "getAllUploads": Func([Text], [Vec(UploadEntry)], []),
   "getCallerUserProfile": Func([], [Opt(UserProfile)], ["query"]),
   "getCallerUserRole": Func([], [UserRole], ["query"]),
-  "getStats": Func([], [Nat, Nat], []),
+  "getStats": Func([Text], [Nat, Nat], []),
   "getUserProfile": Func(
     [Principal2],
     [Opt(UserProfile)],
@@ -39159,13 +39159,13 @@ const idlFactory = ({ IDL: IDL2 }) => {
     ),
     "_caffeineStorageUpdateGatewayPrincipals": IDL2.Func([], [], []),
     "_initializeAccessControlWithSecret": IDL2.Func([IDL2.Text], [], []),
-    "adminLogin": IDL2.Func([IDL2.Text], [IDL2.Bool], []),
+    "adminLogin": IDL2.Func([IDL2.Text], [IDL2.Opt(IDL2.Text)], []),
     "assignCallerUserRole": IDL2.Func([IDL2.Principal, UserRole2], [], []),
-    "deleteUpload": IDL2.Func([IDL2.Text], [], []),
-    "getAllUploads": IDL2.Func([], [IDL2.Vec(UploadEntry2)], []),
+    "deleteUpload": IDL2.Func([IDL2.Text, IDL2.Text], [], []),
+    "getAllUploads": IDL2.Func([IDL2.Text], [IDL2.Vec(UploadEntry2)], []),
     "getCallerUserProfile": IDL2.Func([], [IDL2.Opt(UserProfile2)], ["query"]),
     "getCallerUserRole": IDL2.Func([], [UserRole2], ["query"]),
-    "getStats": IDL2.Func([], [IDL2.Nat, IDL2.Nat], []),
+    "getStats": IDL2.Func([IDL2.Text], [IDL2.Nat, IDL2.Nat], []),
     "getUserProfile": IDL2.Func(
       [IDL2.Principal],
       [IDL2.Opt(UserProfile2)],
@@ -39334,14 +39334,14 @@ class Backend {
     if (this.processError) {
       try {
         const result = await this.actor.adminLogin(arg0);
-        return result;
+        return result.length === 0 ? null : result[0];
       } catch (e) {
         this.processError(e);
         throw new Error("unreachable");
       }
     } else {
       const result = await this.actor.adminLogin(arg0);
-      return result;
+      return result.length === 0 ? null : result[0];
     }
   }
   async assignCallerUserRole(arg0, arg1) {
@@ -39358,31 +39358,31 @@ class Backend {
       return result;
     }
   }
-  async deleteUpload(arg0) {
+  async deleteUpload(arg0, arg1) {
     if (this.processError) {
       try {
-        const result = await this.actor.deleteUpload(arg0);
+        const result = await this.actor.deleteUpload(arg0, arg1);
         return result;
       } catch (e) {
         this.processError(e);
         throw new Error("unreachable");
       }
     } else {
-      const result = await this.actor.deleteUpload(arg0);
+      const result = await this.actor.deleteUpload(arg0, arg1);
       return result;
     }
   }
-  async getAllUploads() {
+  async getAllUploads(arg0) {
     if (this.processError) {
       try {
-        const result = await this.actor.getAllUploads();
+        const result = await this.actor.getAllUploads(arg0);
         return result;
       } catch (e) {
         this.processError(e);
         throw new Error("unreachable");
       }
     } else {
-      const result = await this.actor.getAllUploads();
+      const result = await this.actor.getAllUploads(arg0);
       return result;
     }
   }
@@ -39414,10 +39414,10 @@ class Backend {
       return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
     }
   }
-  async getStats() {
+  async getStats(arg0) {
     if (this.processError) {
       try {
-        const result = await this.actor.getStats();
+        const result = await this.actor.getStats(arg0);
         return [
           result[0],
           result[1]
@@ -39427,7 +39427,7 @@ class Backend {
         throw new Error("unreachable");
       }
     } else {
-      const result = await this.actor.getStats();
+      const result = await this.actor.getStats(arg0);
       return [
         result[0],
         result[1]
@@ -41946,6 +41946,7 @@ function MediaPreviewModal({
 }
 function AdminPage({ onNavigateHome }) {
   const [isLoggedIn, setIsLoggedIn] = reactExports.useState(false);
+  const [sessionToken, setSessionToken] = reactExports.useState(null);
   const [email, setEmail] = reactExports.useState("");
   const [password, setPassword] = reactExports.useState("");
   const [loginError, setLoginError] = reactExports.useState("");
@@ -41963,31 +41964,35 @@ function AdminPage({ onNavigateHome }) {
   const { actor } = useActor();
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
-  const fetchAdminData = reactExports.useCallback(async () => {
-    if (!actor) return;
-    setUploadsLoading(true);
-    try {
-      const [fetchedUploads, fetchedStats] = await Promise.all([
-        actor.getAllUploads(),
-        actor.getStats()
-      ]);
-      setUploads(fetchedUploads);
-      setStats(fetchedStats);
-    } catch {
-      ue.error("Failed to load uploads. Please refresh.");
-    } finally {
-      setUploadsLoading(false);
-    }
-  }, [actor]);
+  const fetchAdminData = reactExports.useCallback(
+    async (token) => {
+      if (!actor) return;
+      setUploadsLoading(true);
+      try {
+        const [fetchedUploads, fetchedStats] = await Promise.all([
+          actor.getAllUploads(token),
+          actor.getStats(token)
+        ]);
+        setUploads(fetchedUploads);
+        setStats(fetchedStats);
+      } catch {
+        ue.error("Failed to load uploads. Please refresh.");
+      } finally {
+        setUploadsLoading(false);
+      }
+    },
+    [actor]
+  );
   reactExports.useEffect(() => {
-    if (isLoggedIn && actor !== null) {
-      fetchAdminData();
+    if (isLoggedIn && actor !== null && sessionToken) {
+      fetchAdminData(sessionToken);
     }
-  }, [isLoggedIn, actor, fetchAdminData]);
+  }, [isLoggedIn, actor, sessionToken, fetchAdminData]);
   const resetSessionTimer = reactExports.useCallback(() => {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     sessionTimerRef.current = setTimeout(() => {
       setIsLoggedIn(false);
+      setSessionToken(null);
       setEmail("");
       setPassword("");
       setUploads(null);
@@ -42048,11 +42053,12 @@ function AdminPage({ onNavigateHome }) {
     }
   };
   const handleDelete = async (blobId) => {
+    if (!sessionToken) return;
     setDeletingIds((prev) => new Set(prev).add(blobId));
     try {
       if (actor) {
-        await actor.deleteUpload(blobId);
-        await fetchAdminData();
+        await actor.deleteUpload(blobId, sessionToken);
+        await fetchAdminData(sessionToken);
       }
     } finally {
       setDeletingIds((prev) => {
@@ -42071,8 +42077,9 @@ function AdminPage({ onNavigateHome }) {
     }
     setIsLoginLoading(true);
     try {
-      const success = await actor.adminLogin(password);
-      if (success) {
+      const token = await actor.adminLogin(password);
+      if (token !== null) {
+        setSessionToken(token);
         setIsLoggedIn(true);
         setLoginError("");
         setFailedAttempts(0);
@@ -42097,6 +42104,7 @@ function AdminPage({ onNavigateHome }) {
   };
   const handleSignOut = () => {
     setIsLoggedIn(false);
+    setSessionToken(null);
     setEmail("");
     setPassword("");
     setLoginError("");
@@ -42409,7 +42417,7 @@ function AdminPage({ onNavigateHome }) {
                         {
                           variant: "ghost",
                           size: "sm",
-                          onClick: () => fetchAdminData(),
+                          onClick: () => sessionToken && fetchAdminData(sessionToken),
                           className: "gap-2 text-xs",
                           "data-ocid": "admin.refresh.button",
                           children: [
@@ -42712,21 +42720,24 @@ function AdminPage({ onNavigateHome }) {
               borderColor: "oklch(1 0 0 / 0.2)",
               backgroundColor: "oklch(0.38 0.09 35 / 0.15)"
             },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-6xl mx-auto text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "a",
-              {
-                href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
-                target: "_blank",
-                rel: "noopener noreferrer",
-                className: "text-xs hover:underline",
-                style: { color: "oklch(0.55 0.05 40)" },
-                children: [
-                  "© ",
-                  (/* @__PURE__ */ new Date()).getFullYear(),
-                  ". Built with love using caffeine.ai"
-                ]
-              }
-            ) })
+            children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-6xl mx-auto text-center space-y-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "oklch(0.45 0.06 40)" }, children: "Created by Dhruv Dhameliya" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "a",
+                {
+                  href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  className: "text-xs hover:underline",
+                  style: { color: "oklch(0.55 0.05 40)" },
+                  children: [
+                    "© ",
+                    (/* @__PURE__ */ new Date()).getFullYear(),
+                    ". Built with love using caffeine.ai"
+                  ]
+                }
+              )
+            ] })
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx(
