@@ -43,24 +43,26 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   var uploadEntries = Array.empty<UploadEntry>();
 
-  // Simple session token stored in canister state
+  // Admin credentials — session token validated purely by constant comparison
   let ADMIN_PASSWORD = "Kaushal@123";
   let ADMIN_SESSION_TOKEN = "kf-admin-session-2024";
+
+  // Kept for stable variable compatibility with previous deployment
   var adminSessionActive = false;
 
-  // Admin login: verify password and activate session token
+  // Admin login: verify password and return session token
   public shared func adminLogin(password : Text) : async ?Text {
     if (password == ADMIN_PASSWORD) {
-      adminSessionActive := true;
+      adminSessionActive := true; // kept for stable var compatibility
       ?ADMIN_SESSION_TOKEN;
     } else {
       null;
     };
   };
 
-  // Verify session token helper
+  // Verify session token — purely token comparison, survives canister upgrades
   func verifyAdminSession(token : Text) {
-    if (not adminSessionActive or token != ADMIN_SESSION_TOKEN) {
+    if (token != ADMIN_SESSION_TOKEN) {
       Runtime.trap("Unauthorized");
     };
   };

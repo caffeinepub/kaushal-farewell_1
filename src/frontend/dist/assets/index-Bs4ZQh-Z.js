@@ -41976,8 +41976,18 @@ function AdminPage({ onNavigateHome }) {
         ]);
         setUploads(fetchedUploads);
         setStats(fetchedStats);
-      } catch {
-        ue.error("Failed to load uploads. Please refresh.");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("Unauthorized")) {
+          setIsLoggedIn(false);
+          setSessionToken(null);
+          setUploads(null);
+          setStats(null);
+          localStorage.removeItem(LS_TOKEN_KEY);
+          ue.error("Session expired. Please log in again.");
+        } else {
+          ue.error("Failed to load uploads. Please refresh.");
+        }
       } finally {
         setUploadsLoading(false);
       }
@@ -42069,6 +42079,17 @@ function AdminPage({ onNavigateHome }) {
       if (actor) {
         await actor.deleteUpload(blobId, sessionToken);
         await fetchAdminData(sessionToken);
+        ue.success("File deleted.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        setIsLoggedIn(false);
+        setSessionToken(null);
+        localStorage.removeItem(LS_TOKEN_KEY);
+        ue.error("Session expired. Please log in again.");
+      } else {
+        ue.error("Failed to delete file. Please try again.");
       }
     } finally {
       setDeletingIds((prev) => {

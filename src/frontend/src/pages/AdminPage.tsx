@@ -362,8 +362,19 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         ]);
         setUploads(fetchedUploads);
         setStats(fetchedStats);
-      } catch {
-        toast.error("Failed to load uploads. Please refresh.");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("Unauthorized")) {
+          // Session token rejected by backend (canister restarted) — force re-login
+          setIsLoggedIn(false);
+          setSessionToken(null);
+          setUploads(null);
+          setStats(null);
+          localStorage.removeItem(LS_TOKEN_KEY);
+          toast.error("Session expired. Please log in again.");
+        } else {
+          toast.error("Failed to load uploads. Please refresh.");
+        }
       } finally {
         setUploadsLoading(false);
       }
@@ -468,6 +479,17 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       if (actor) {
         await actor.deleteUpload(blobId, sessionToken);
         await fetchAdminData(sessionToken);
+        toast.success("File deleted.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        setIsLoggedIn(false);
+        setSessionToken(null);
+        localStorage.removeItem(LS_TOKEN_KEY);
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error("Failed to delete file. Please try again.");
       }
     } finally {
       setDeletingIds((prev) => {
