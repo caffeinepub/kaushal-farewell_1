@@ -55,6 +55,7 @@ import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const LS_TOKEN_KEY = "kf-admin-token";
 
 function getFileExt(fileName: string): string {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -387,9 +388,20 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       setPassword("");
       setUploads(null);
       setStats(null);
+      localStorage.removeItem(LS_TOKEN_KEY);
       toast.error("Session expired. Please log in again.");
     }, SESSION_TIMEOUT_MS);
   }, []);
+
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(LS_TOKEN_KEY);
+    if (saved) {
+      setSessionToken(saved);
+      setIsLoggedIn(true);
+      resetSessionTimer();
+    }
+  }, [resetSessionTimer]);
 
   // Activity listeners to reset session timer
   useEffect(() => {
@@ -484,6 +496,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         setLoginError("");
         setFailedAttempts(0);
         resetSessionTimer();
+        localStorage.setItem(LS_TOKEN_KEY, token as string);
       } else {
         const newAttempts = failedAttempts + 1;
         setFailedAttempts(newAttempts);
@@ -515,6 +528,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setLockoutUntil(null);
     setUploads(null);
     setStats(null);
+    localStorage.removeItem(LS_TOKEN_KEY);
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
   };
 
@@ -665,7 +679,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
                 <Button
                   type="submit"
-                  disabled={!!lockoutUntil || isLoginLoading || !actor}
+                  disabled={!!lockoutUntil || isLoginLoading}
                   className="w-full rounded-xl font-semibold text-white mt-2"
                   style={{
                     background:
@@ -673,12 +687,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   }}
                   data-ocid="admin.login.submit_button"
                 >
-                  {!actor ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : isLoginLoading ? (
+                  {isLoginLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Signing in...
