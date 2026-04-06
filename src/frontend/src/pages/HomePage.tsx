@@ -21,6 +21,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useActor } from "../hooks/useActor";
 import { useUploadMemory } from "../hooks/useQueries";
 
 interface FileItem {
@@ -59,6 +60,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadMemory();
+  const { actor, isFetching: isActorLoading } = useActor();
 
   const addFiles = useCallback((newFiles: File[]) => {
     const items: FileItem[] = newFiles.map((f) => ({
@@ -114,6 +116,12 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
     }
     if (files.length === 0) {
       toast.error("Please select at least one file to upload");
+      return;
+    }
+    if (!actor) {
+      toast.error(
+        "Still connecting to server, please wait a moment and try again.",
+      );
       return;
     }
 
@@ -722,6 +730,8 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                       type="submit"
                       disabled={
                         isUploading ||
+                        isActorLoading ||
+                        !actor ||
                         files.length === 0 ||
                         !uploaderName.trim()
                       }
@@ -736,6 +746,11 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Uploading Memories…
+                        </>
+                      ) : isActorLoading || !actor ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Connecting…
                         </>
                       ) : (
                         <>

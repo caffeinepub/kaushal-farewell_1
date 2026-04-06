@@ -43610,6 +43610,7 @@ function HomePage({ onNavigateAdmin }) {
   const [isUploading, setIsUploading] = reactExports.useState(false);
   const fileInputRef = reactExports.useRef(null);
   const uploadMutation = useUploadMemory();
+  const { actor, isFetching: isActorLoading } = useActor();
   const addFiles = reactExports.useCallback((newFiles) => {
     const items = newFiles.map((f) => ({
       id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
@@ -43660,6 +43661,12 @@ function HomePage({ onNavigateAdmin }) {
     }
     if (files.length === 0) {
       ue.error("Please select at least one file to upload");
+      return;
+    }
+    if (!actor) {
+      ue.error(
+        "Still connecting to server, please wait a moment and try again."
+      );
       return;
     }
     setIsUploading(true);
@@ -44325,7 +44332,7 @@ function HomePage({ onNavigateAdmin }) {
                             Button,
                             {
                               type: "submit",
-                              disabled: isUploading || files.length === 0 || !uploaderName.trim(),
+                              disabled: isUploading || isActorLoading || !actor || files.length === 0 || !uploaderName.trim(),
                               className: "w-full h-12 rounded-full text-white font-bold text-sm tracking-wide shadow-md transition-all hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60",
                               style: {
                                 background: "linear-gradient(135deg, oklch(0.63 0.14 29) 0%, oklch(0.7 0.12 30) 100%)"
@@ -44334,6 +44341,9 @@ function HomePage({ onNavigateAdmin }) {
                               children: isUploading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                                 /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
                                 "Uploading Memories…"
+                              ] }) : isActorLoading || !actor ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                                /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
+                                "Connecting…"
                               ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                                 /* @__PURE__ */ jsxRuntimeExports.jsx(Heart, { className: "w-4 h-4 mr-2" }),
                                 "Share ",
