@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -54,8 +55,9 @@ import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const LS_TOKEN_KEY = "kf-admin-token";
+const AUTO_REFRESH_MS = 2000;
 
 function getFileExt(fileName: string): string {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -145,7 +147,6 @@ function MediaThumbnail({
         className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring"
         style={{ width: 64, height: 48 }}
         aria-label="Preview image"
-        data-ocid="admin.uploads.preview_button"
       >
         {(!loaded || !url) && (
           <Skeleton className="absolute inset-0 rounded-lg" />
@@ -177,7 +178,6 @@ function MediaThumbnail({
         className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity bg-black focus:outline-none focus:ring-2 focus:ring-ring"
         style={{ width: 80, height: 48 }}
         aria-label="Preview video"
-        data-ocid="admin.uploads.preview_button"
       >
         {url ? (
           <video
@@ -207,11 +207,7 @@ function MediaThumbnail({
   return (
     <div
       className="flex-shrink-0 rounded-lg border border-border/40 flex items-center justify-center"
-      style={{
-        width: 48,
-        height: 48,
-        backgroundColor: "oklch(0.96 0.015 55)",
-      }}
+      style={{ width: 48, height: 48, backgroundColor: "oklch(0.96 0.015 55)" }}
     >
       {getFileTypeIcon(fileName)}
     </div>
@@ -248,7 +244,6 @@ function MediaPreviewModal({
       <DialogContent
         className="max-w-3xl w-full p-0 overflow-hidden rounded-2xl"
         style={{ backgroundColor: "oklch(0.14 0.02 30)" }}
-        data-ocid="admin.preview.dialog"
       >
         <DialogHeader
           className="px-5 pt-4 pb-3 border-b"
@@ -277,13 +272,11 @@ function MediaPreviewModal({
               onClick={onClose}
               className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
               style={{ backgroundColor: "oklch(1 0 0 / 0.1)" }}
-              data-ocid="admin.preview.close_button"
             >
               <X className="w-4 h-4" style={{ color: "oklch(0.85 0.02 55)" }} />
             </button>
           </div>
         </DialogHeader>
-
         <div
           className="flex items-center justify-center p-4"
           style={{ minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" }}
@@ -314,7 +307,7 @@ function MediaPreviewModal({
                 style={{ color: "oklch(0.65 0.04 40)" }}
               />
               <p className="text-sm" style={{ color: "oklch(0.65 0.04 40)" }}>
-                Preview not available for this file type.
+                Preview not available.
               </p>
             </div>
           )}
@@ -337,24 +330,56 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [previewEntry, setPreviewEntry] = useState<PreviewEntry | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
-  // Local data state — fetched only after login
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Local data state
   const [uploads, setUploads] = useState<UploadEntry[] | null>(null);
   const [stats, setStats] = useState<[bigint, bigint] | null>(null);
   const [uploadsLoading, setUploadsLoading] = useState(false);
+  const [autoRefreshActive, setAutoRefreshActive] = useState(false);
 
   const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFetchingRef = useRef(false);
 
   const { actor } = useActor();
 
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
 
-  // Fetch admin data — only called after login
+  const allSelected =
+    uploads !== null &&
+    uploads.length > 0 &&
+    selectedIds.size === uploads.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(uploads?.map((u) => u.blobId) ?? []));
+    }
+  };
+
+  const toggleSelect = (blobId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(blobId)) next.delete(blobId);
+      else next.add(blobId);
+      return next;
+    });
+  };
+
   const fetchAdminData = useCallback(
-    async (token: string) => {
+    async (token: string, silent = false) => {
       if (!actor) return;
-      setUploadsLoading(true);
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+      if (!silent) setUploadsLoading(true);
       try {
         const [fetchedUploads, fetchedStats] = await Promise.all([
           actor.getAllUploads(token),
@@ -365,31 +390,52 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.includes("Unauthorized")) {
-          // Session token rejected by backend (canister restarted) — force re-login
           setIsLoggedIn(false);
           setSessionToken(null);
           setUploads(null);
           setStats(null);
           localStorage.removeItem(LS_TOKEN_KEY);
           toast.error("Session expired. Please log in again.");
-        } else {
+        } else if (!silent) {
           toast.error("Failed to load uploads. Please refresh.");
         }
       } finally {
-        setUploadsLoading(false);
+        isFetchingRef.current = false;
+        if (!silent) setUploadsLoading(false);
       }
     },
     [actor],
   );
 
-  // Load data once logged in and actor is ready
   useEffect(() => {
     if (isLoggedIn && actor !== null && sessionToken) {
       fetchAdminData(sessionToken);
     }
   }, [isLoggedIn, actor, sessionToken, fetchAdminData]);
 
-  // Session timeout
+  // Auto-refresh every 2 seconds
+  useEffect(() => {
+    if (!isLoggedIn || !sessionToken || !actor) {
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+        autoRefreshRef.current = null;
+        setAutoRefreshActive(false);
+      }
+      return;
+    }
+    setAutoRefreshActive(true);
+    autoRefreshRef.current = setInterval(() => {
+      fetchAdminData(sessionToken, true);
+    }, AUTO_REFRESH_MS);
+    return () => {
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+        autoRefreshRef.current = null;
+        setAutoRefreshActive(false);
+      }
+    };
+  }, [isLoggedIn, sessionToken, actor, fetchAdminData]);
+
   const resetSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     sessionTimerRef.current = setTimeout(() => {
@@ -404,7 +450,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     }, SESSION_TIMEOUT_MS);
   }, []);
 
-  // Restore session from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(LS_TOKEN_KEY);
     if (saved) {
@@ -414,7 +459,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     }
   }, [resetSessionTimer]);
 
-  // Activity listeners to reset session timer
   useEffect(() => {
     if (!isLoggedIn) return;
     const events = ["mousemove", "keydown", "click", "scroll"] as const;
@@ -426,7 +470,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     };
   }, [isLoggedIn, resetSessionTimer]);
 
-  // Lockout countdown
   useEffect(() => {
     if (!lockoutUntil) return;
     const interval = setInterval(() => {
@@ -478,6 +521,11 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     try {
       if (actor) {
         await actor.deleteUpload(blobId, sessionToken);
+        setSelectedIds((prev) => {
+          const n = new Set(prev);
+          n.delete(blobId);
+          return n;
+        });
         await fetchAdminData(sessionToken);
         toast.success("File deleted.");
       }
@@ -493,22 +541,66 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       }
     } finally {
       setDeletingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(blobId);
-        return next;
+        const n = new Set(prev);
+        n.delete(blobId);
+        return n;
       });
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!sessionToken || !actor || selectedIds.size === 0) return;
+    setIsDeletingSelected(true);
+    try {
+      await actor.deleteSelectedUploads(Array.from(selectedIds), sessionToken);
+      setSelectedIds(new Set());
+      await fetchAdminData(sessionToken);
+      toast.success(`${selectedIds.size} file(s) deleted.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        setIsLoggedIn(false);
+        setSessionToken(null);
+        localStorage.removeItem(LS_TOKEN_KEY);
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error("Failed to delete selected files.");
+      }
+    } finally {
+      setIsDeletingSelected(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!sessionToken || !actor) return;
+    setIsDeletingAll(true);
+    try {
+      await actor.deleteAllUploads(sessionToken);
+      setSelectedIds(new Set());
+      await fetchAdminData(sessionToken);
+      toast.success("All files deleted.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unauthorized")) {
+        setIsLoggedIn(false);
+        setSessionToken(null);
+        localStorage.removeItem(LS_TOKEN_KEY);
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error("Failed to delete all files.");
+      }
+    } finally {
+      setIsDeletingAll(false);
     }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockoutUntil) return;
-
     if (!actor) {
       setLoginError("Still connecting, please wait a moment and try again.");
       return;
     }
-
     setIsLoginLoading(true);
     try {
       const token = await actor.adminLogin(password);
@@ -550,8 +642,13 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setLockoutUntil(null);
     setUploads(null);
     setStats(null);
+    setSelectedIds(new Set());
     localStorage.removeItem(LS_TOKEN_KEY);
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    if (autoRefreshRef.current) {
+      clearInterval(autoRefreshRef.current);
+      autoRefreshRef.current = null;
+    }
   };
 
   void lockoutSecondsLeft;
@@ -577,7 +674,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 onClick={onNavigateHome}
                 className="flex items-center gap-2 text-sm font-medium transition-colors"
                 style={{ color: "oklch(0.55 0.06 40)" }}
-                data-ocid="admin.back.link"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -606,7 +702,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 onClick={handleSignOut}
                 className="rounded-full font-semibold px-6 text-white"
                 style={{ background: "oklch(0.55 0.06 40)" }}
-                data-ocid="admin.signout.button"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -622,7 +717,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-16"
-            data-ocid="admin.login.panel"
           >
             <div
               className="w-full max-w-sm rounded-2xl shadow-card p-8"
@@ -639,14 +733,12 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   <Shield className="w-7 h-7 text-white" />
                 </div>
               </div>
-
               <h2
                 className="font-display font-bold text-2xl text-center mb-6"
                 style={{ color: "oklch(var(--hero-brown))" }}
               >
                 Admin Login
               </h2>
-
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label
@@ -664,10 +756,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     placeholder="admin@example.com"
                     disabled={!!lockoutUntil}
                     className="rounded-xl border-border/60 focus:border-coral/60"
-                    data-ocid="admin.login.input"
                   />
                 </div>
-
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="admin-password"
@@ -685,20 +775,16 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     required
                     disabled={!!lockoutUntil}
                     className="rounded-xl border-border/60 focus:border-coral/60"
-                    data-ocid="admin.login.password"
                   />
                 </div>
-
                 {loginError && (
                   <p
                     className="text-sm text-center"
                     style={{ color: "oklch(0.5 0.18 25)" }}
-                    data-ocid="admin.login.error_state"
                   >
                     {loginError}
                   </p>
                 )}
-
                 <Button
                   type="submit"
                   disabled={!!lockoutUntil || isLoginLoading}
@@ -707,7 +793,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     background:
                       "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
                   }}
-                  data-ocid="admin.login.submit_button"
                 >
                   {isLoginLoading ? (
                     <>
@@ -732,7 +817,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
               <div
                 className="rounded-2xl p-5 shadow-card"
                 style={{ backgroundColor: "oklch(1 0 0)" }}
-                data-ocid="admin.stats.card"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -760,7 +844,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   </div>
                 </div>
               </div>
-
               <div
                 className="rounded-2xl p-5 shadow-card"
                 style={{ backgroundColor: "oklch(1 0 0)" }}
@@ -798,7 +881,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
               className="rounded-2xl shadow-card overflow-hidden"
               style={{ backgroundColor: "oklch(1 0 0)" }}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+              {/* Table header bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
                   <Heart
                     className="w-4 h-4"
@@ -815,26 +899,133 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                       {uploads.length}
                     </Badge>
                   )}
+                  {selectedIds.size > 0 && (
+                    <Badge
+                      className="text-xs text-white"
+                      style={{ backgroundColor: "oklch(0.63 0.14 29)" }}
+                    >
+                      {selectedIds.size} selected
+                    </Badge>
+                  )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => sessionToken && fetchAdminData(sessionToken)}
-                  className="gap-2 text-xs"
-                  data-ocid="admin.refresh.button"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Refresh
-                </Button>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {autoRefreshActive && (
+                    <span
+                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: "oklch(0.93 0.06 142 / 0.15)",
+                        color: "oklch(0.45 0.12 142)",
+                      }}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full animate-pulse"
+                        style={{ backgroundColor: "oklch(0.55 0.15 142)" }}
+                      />
+                      Live
+                    </span>
+                  )}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => sessionToken && fetchAdminData(sessionToken)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Refresh
+                  </Button>
+
+                  {/* Delete Selected */}
+                  {selectedIds.size > 0 && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          disabled={isDeletingSelected}
+                          className="gap-1.5 text-xs text-white rounded-lg"
+                          style={{ background: "oklch(0.55 0.18 25)" }}
+                        >
+                          {isDeletingSelected ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          Delete Selected ({selectedIds.size})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Delete {selectedIds.size} selected file(s)?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove the selected{" "}
+                            {selectedIds.size} file(s) and cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteSelected}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete {selectedIds.size} File(s)
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+
+                  {/* Delete All */}
+                  {uploads && uploads.length > 0 && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isDeletingAll}
+                          className="gap-1.5 text-xs rounded-lg border-red-300/60 hover:border-red-400/60"
+                          style={{ color: "oklch(0.5 0.18 25)" }}
+                        >
+                          {isDeletingAll ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          Delete All
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Delete ALL uploads?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove all {uploads.length}{" "}
+                            uploaded files and cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteAll}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete All {uploads.length} Files
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
 
               {uploadsLoading ? (
-                <div
-                  className="p-5 space-y-3"
-                  data-ocid="admin.uploads.loading_state"
-                >
+                <div className="p-5 space-y-3">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-4 w-4 rounded" />
                       <Skeleton className="h-12 w-16 rounded-lg" />
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-4 w-48" />
@@ -844,10 +1035,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   ))}
                 </div>
               ) : !uploads || uploads.length === 0 ? (
-                <div
-                  className="py-16 text-center"
-                  data-ocid="admin.uploads.empty_state"
-                >
+                <div className="py-16 text-center">
                   <Heart
                     className="w-10 h-10 mx-auto mb-3 opacity-30"
                     style={{ color: "oklch(var(--coral-primary))" }}
@@ -867,13 +1055,27 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   </p>
                 </div>
               ) : (
-                <div
-                  className="overflow-x-auto"
-                  data-ocid="admin.uploads.table"
-                >
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-border/50">
+                        <TableHead className="w-10 pl-5">
+                          <Checkbox
+                            checked={allSelected}
+                            ref={(el) => {
+                              if (el)
+                                (el as HTMLButtonElement).dataset.state =
+                                  someSelected
+                                    ? "indeterminate"
+                                    : allSelected
+                                      ? "checked"
+                                      : "unchecked";
+                            }}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                            className="border-border/60"
+                          />
+                        </TableHead>
                         <TableHead
                           className="text-xs font-bold uppercase tracking-wider w-10"
                           style={{ color: "oklch(var(--hero-brown))" }}
@@ -921,8 +1123,23 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.04, duration: 0.25 }}
                             className="border-border/30 hover:bg-accent/30 transition-colors"
-                            data-ocid={`admin.uploads.item.${idx + 1}`}
+                            style={{
+                              backgroundColor: selectedIds.has(entry.blobId)
+                                ? "oklch(0.95 0.03 55 / 0.6)"
+                                : undefined,
+                            }}
                           >
+                            <TableCell className="pl-5">
+                              <Checkbox
+                                checked={selectedIds.has(entry.blobId)}
+                                onCheckedChange={() =>
+                                  toggleSelect(entry.blobId)
+                                }
+                                aria-label={`Select ${entry.fileName}`}
+                                className="border-border/60"
+                              />
+                            </TableCell>
+
                             <TableCell
                               className="text-xs"
                               style={{
@@ -996,7 +1213,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                   onClick={() => handleViewFile(entry.blobId)}
                                   className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
                                   title="Open in new tab"
-                                  data-ocid={`admin.uploads.view_button.${idx + 1}`}
                                 >
                                   <Eye
                                     className="w-3.5 h-3.5"
@@ -1015,7 +1231,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                   disabled={downloadingIds.has(entry.blobId)}
                                   className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
                                   title="Download"
-                                  data-ocid={`admin.uploads.download_button.${idx + 1}`}
                                 >
                                   {downloadingIds.has(entry.blobId) ? (
                                     <Loader2
@@ -1042,7 +1257,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                       disabled={deletingIds.has(entry.blobId)}
                                       className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-red-400/50"
                                       title="Delete"
-                                      data-ocid={`admin.uploads.delete_button.${idx + 1}`}
                                     >
                                       {deletingIds.has(entry.blobId) ? (
                                         <Loader2
@@ -1062,7 +1276,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                       )}
                                     </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent data-ocid="admin.uploads.delete.dialog">
+                                  <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>
                                         Delete this upload?
@@ -1073,7 +1287,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel data-ocid="admin.uploads.delete.cancel_button">
+                                      <AlertDialogCancel>
                                         Cancel
                                       </AlertDialogCancel>
                                       <AlertDialogAction
@@ -1081,7 +1295,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                                           handleDelete(entry.blobId)
                                         }
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        data-ocid="admin.uploads.delete.confirm_button"
                                       >
                                         Delete
                                       </AlertDialogAction>

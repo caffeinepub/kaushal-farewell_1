@@ -32,6 +32,8 @@ export interface backendInterface {
     adminLogin(password: string): Promise<string | null>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteUpload(blobId: string, sessionToken: string): Promise<void>;
+    deleteAllUploads(sessionToken: string): Promise<void>;
+    deleteSelectedUploads(blobIds: Array<string>, sessionToken: string): Promise<void>;
     getAllUploads(sessionToken: string): Promise<Array<UploadEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

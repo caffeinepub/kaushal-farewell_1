@@ -52,6 +52,8 @@ export interface _SERVICE {
   'adminLogin' : ActorMethod<[string], [] | [string]>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteUpload' : ActorMethod<[string, string], undefined>,
+  'deleteAllUploads' : ActorMethod<[string], undefined>,
+  'deleteSelectedUploads' : ActorMethod<[Array<string>, string], undefined>,
   'getAllUploads' : ActorMethod<[string], Array<UploadEntry>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,

@@ -125,6 +125,8 @@ export interface backendInterface {
     adminLogin(password: string): Promise<string | null>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteUpload(blobId: string, sessionToken: string): Promise<void>;
+    deleteAllUploads(sessionToken: string): Promise<void>;
+    deleteSelectedUploads(blobIds: Array<string>, sessionToken: string): Promise<void>;
     getAllUploads(sessionToken: string): Promise<Array<UploadEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -274,6 +276,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteUpload(arg0, arg1);
+            return result;
+        }
+    }
+    async deleteAllUploads(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteAllUploads(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteAllUploads(arg0);
+            return result;
+        }
+    }
+    async deleteSelectedUploads(arg0: Array<string>, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteSelectedUploads(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteSelectedUploads(arg0, arg1);
             return result;
         }
     }

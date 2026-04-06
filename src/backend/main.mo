@@ -115,6 +115,22 @@ actor {
     uploadEntries := uploadEntries.filter(func(e : UploadEntry) : Bool { e.blobId != blobId });
   };
 
+  // Delete all uploads at once
+  public shared func deleteAllUploads(sessionToken : Text) : async () {
+    verifyAdminSession(sessionToken);
+    uploadEntries := Array.empty<UploadEntry>();
+  };
+
+  // Delete a selected set of uploads by blobId
+  public shared func deleteSelectedUploads(blobIds : [Text], sessionToken : Text) : async () {
+    verifyAdminSession(sessionToken);
+    let blobIdSet = Set.empty<Text>();
+    for (id in blobIds.values()) {
+      blobIdSet.add(id);
+    };
+    uploadEntries := uploadEntries.filter(func(e : UploadEntry) : Bool { not blobIdSet.contains(e.blobId) });
+  };
+
   public shared func getAllUploads(sessionToken : Text) : async [UploadEntry] {
     verifyAdminSession(sessionToken);
     uploadEntries;
