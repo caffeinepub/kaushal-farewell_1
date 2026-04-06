@@ -20312,18 +20312,18 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$o = [
+const __iconNode$q = [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
 ];
-const ArrowLeft = createLucideIcon("arrow-left", __iconNode$o);
+const ArrowLeft = createLucideIcon("arrow-left", __iconNode$q);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$n = [
+const __iconNode$p = [
   [
     "path",
     {
@@ -20333,23 +20333,46 @@ const __iconNode$n = [
   ],
   ["circle", { cx: "12", cy: "13", r: "3", key: "1vg3eu" }]
 ];
-const Camera = createLucideIcon("camera", __iconNode$n);
+const Camera = createLucideIcon("camera", __iconNode$p);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$m = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("check", __iconNode$m);
+const __iconNode$o = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("check", __iconNode$o);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$l = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
-const ChevronRight = createLucideIcon("chevron-right", __iconNode$l);
+const __iconNode$n = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+const ChevronRight = createLucideIcon("chevron-right", __iconNode$n);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$m = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+];
+const CircleCheck = createLucideIcon("circle-check", __iconNode$m);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$l = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m15 9-6 6", key: "1uzhvr" }],
+  ["path", { d: "m9 9 6 6", key: "z0biqf" }]
+];
+const CircleX = createLucideIcon("circle-x", __iconNode$l);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20357,10 +20380,11 @@ const ChevronRight = createLucideIcon("chevron-right", __iconNode$l);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$k = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+  ["path", { d: "M12 13v8", key: "1l5pq0" }],
+  ["path", { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", key: "1pljnt" }],
+  ["path", { d: "m8 17 4-4 4 4", key: "1quai1" }]
 ];
-const CircleCheck = createLucideIcon("circle-check", __iconNode$k);
+const CloudUpload = createLucideIcon("cloud-upload", __iconNode$k);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20368,11 +20392,11 @@ const CircleCheck = createLucideIcon("circle-check", __iconNode$k);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$j = [
-  ["path", { d: "M12 13v8", key: "1l5pq0" }],
-  ["path", { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", key: "1pljnt" }],
-  ["path", { d: "m8 17 4-4 4 4", key: "1quai1" }]
+  ["path", { d: "M12 15V3", key: "m9g1x1" }],
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
 ];
-const CloudUpload = createLucideIcon("cloud-upload", __iconNode$j);
+const Download = createLucideIcon("download", __iconNode$j);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20380,18 +20404,6 @@ const CloudUpload = createLucideIcon("cloud-upload", __iconNode$j);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$i = [
-  ["path", { d: "M12 15V3", key: "m9g1x1" }],
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-];
-const Download = createLucideIcon("download", __iconNode$i);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$h = [
   [
     "path",
     {
@@ -20401,7 +20413,20 @@ const __iconNode$h = [
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ];
-const Eye = createLucideIcon("eye", __iconNode$h);
+const Eye = createLucideIcon("eye", __iconNode$i);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$h = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["circle", { cx: "10", cy: "12", r: "2", key: "737tya" }],
+  ["path", { d: "m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22", key: "wt3hpn" }]
+];
+const FileImage = createLucideIcon("file-image", __iconNode$h);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20411,10 +20436,9 @@ const Eye = createLucideIcon("eye", __iconNode$h);
 const __iconNode$g = [
   ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["circle", { cx: "10", cy: "12", r: "2", key: "737tya" }],
-  ["path", { d: "m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22", key: "wt3hpn" }]
+  ["path", { d: "m10 11 5 3-5 3v-6Z", key: "7ntvm4" }]
 ];
-const FileImage = createLucideIcon("file-image", __iconNode$g);
+const FileVideo = createLucideIcon("file-video", __iconNode$g);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20423,10 +20447,9 @@ const FileImage = createLucideIcon("file-image", __iconNode$g);
  */
 const __iconNode$f = [
   ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "m10 11 5 3-5 3v-6Z", key: "7ntvm4" }]
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }]
 ];
-const FileVideo = createLucideIcon("file-video", __iconNode$f);
+const File = createLucideIcon("file", __iconNode$f);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20434,17 +20457,6 @@ const FileVideo = createLucideIcon("file-video", __iconNode$f);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$e = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }]
-];
-const File = createLucideIcon("file", __iconNode$e);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$d = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -20454,14 +20466,14 @@ const __iconNode$d = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("film", __iconNode$d);
+const Film = createLucideIcon("film", __iconNode$e);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$c = [
+const __iconNode$d = [
   [
     "path",
     {
@@ -20470,7 +20482,19 @@ const __iconNode$c = [
     }
   ]
 ];
-const Heart = createLucideIcon("heart", __iconNode$c);
+const Heart = createLucideIcon("heart", __iconNode$d);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$c = [
+  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
+  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
+  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
+];
+const Image = createLucideIcon("image", __iconNode$c);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20478,31 +20502,31 @@ const Heart = createLucideIcon("heart", __iconNode$c);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$b = [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
-  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
-  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
-];
-const Image = createLucideIcon("image", __iconNode$b);
-/**
- * @license lucide-react v0.511.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$a = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "M12 16v-4", key: "1dtifu" }],
   ["path", { d: "M12 8h.01", key: "e9boi3" }]
 ];
-const Info = createLucideIcon("info", __iconNode$a);
+const Info = createLucideIcon("info", __iconNode$b);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$9 = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("loader-circle", __iconNode$9);
+const __iconNode$a = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("loader-circle", __iconNode$a);
+/**
+ * @license lucide-react v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$9 = [
+  ["path", { d: "m16 17 5-5-5-5", key: "1bji2h" }],
+  ["path", { d: "M21 12H9", key: "dn1m92" }],
+  ["path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", key: "1uf3rs" }]
+];
+const LogOut = createLucideIcon("log-out", __iconNode$9);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20510,11 +20534,12 @@ const LoaderCircle = createLucideIcon("loader-circle", __iconNode$9);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$8 = [
-  ["path", { d: "m16 17 5-5-5-5", key: "1bji2h" }],
-  ["path", { d: "M21 12H9", key: "dn1m92" }],
-  ["path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", key: "1uf3rs" }]
+  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+  ["path", { d: "M8 16H3v5", key: "1cv678" }]
 ];
-const LogOut = createLucideIcon("log-out", __iconNode$8);
+const RefreshCw = createLucideIcon("refresh-cw", __iconNode$8);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -20522,12 +20547,10 @@ const LogOut = createLucideIcon("log-out", __iconNode$8);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$7 = [
-  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-  ["path", { d: "M8 16H3v5", key: "1cv678" }]
+  ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
+  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
 ];
-const RefreshCw = createLucideIcon("refresh-cw", __iconNode$7);
+const Search = createLucideIcon("search", __iconNode$7);
 /**
  * @license lucide-react v0.511.0 - ISC
  *
@@ -42318,6 +42341,7 @@ function AdminPage({ onNavigateHome }) {
   const [deletingIds, setDeletingIds] = reactExports.useState(/* @__PURE__ */ new Set());
   const [isDeletingSelected, setIsDeletingSelected] = reactExports.useState(false);
   const [isDeletingAll, setIsDeletingAll] = reactExports.useState(false);
+  const [searchQuery, setSearchQuery] = reactExports.useState("");
   const [selectedIds, setSelectedIds] = reactExports.useState(/* @__PURE__ */ new Set());
   const [uploads, setUploads] = reactExports.useState(null);
   const [stats, setStats] = reactExports.useState(null);
@@ -42331,6 +42355,11 @@ function AdminPage({ onNavigateHome }) {
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
   const allSelected = uploads !== null && uploads.length > 0 && selectedIds.size === uploads.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
+  const filteredUploads = uploads ? uploads.filter((u) => {
+    const q2 = searchQuery.toLowerCase().trim();
+    if (!q2) return true;
+    return u.fileName.toLowerCase().includes(q2) || u.uploaderName.toLowerCase().includes(q2);
+  }) : null;
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedIds(/* @__PURE__ */ new Set());
@@ -42891,7 +42920,7 @@ function AdminPage({ onNavigateHome }) {
                             children: "All Uploaded Memories"
                           }
                         ),
-                        uploads && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "secondary", className: "text-xs", children: uploads.length }),
+                        uploads && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "secondary", className: "text-xs", children: searchQuery ? `${(filteredUploads == null ? void 0 : filteredUploads.length) ?? 0} / ${uploads.length}` : uploads.length }),
                         selectedIds.size > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
                           Badge,
                           {
@@ -43029,6 +43058,42 @@ function AdminPage({ onNavigateHome }) {
                         ] })
                       ] })
                     ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-5 py-3 border-b border-border/30", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-full max-w-sm", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Search,
+                        {
+                          className: "absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none",
+                          style: { color: "oklch(0.65 0.04 55)" }
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "input",
+                        {
+                          type: "text",
+                          placeholder: "Search by name or uploader...",
+                          value: searchQuery,
+                          onChange: (e) => setSearchQuery(e.target.value),
+                          className: "w-full pl-9 pr-8 py-1.5 text-sm rounded-lg border border-border/50 bg-transparent outline-none focus:ring-1 focus:ring-border",
+                          style: { color: "oklch(var(--hero-brown))" }
+                        }
+                      ),
+                      searchQuery && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => setSearchQuery(""),
+                          className: "absolute right-2 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100",
+                          "aria-label": "Clear search",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            CircleX,
+                            {
+                              className: "w-3.5 h-3.5",
+                              style: { color: "oklch(0.65 0.04 55)" }
+                            }
+                          )
+                        }
+                      )
+                    ] }) }),
                     uploadsLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-5 space-y-3", children: [1, 2, 3, 4].map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-4 rounded" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-12 w-16 rounded-lg" }),
@@ -43058,6 +43123,30 @@ function AdminPage({ onNavigateHome }) {
                           className: "text-xs mt-1",
                           style: { color: "oklch(0.65 0.04 55)" },
                           children: "Share the upload link with guests to start collecting memories."
+                        }
+                      )
+                    ] }) : filteredUploads && filteredUploads.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "py-16 text-center", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Search,
+                        {
+                          className: "w-10 h-10 mx-auto mb-3 opacity-30",
+                          style: { color: "oklch(var(--coral-primary))" }
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "p",
+                        {
+                          className: "text-sm font-medium",
+                          style: { color: "oklch(var(--muted-foreground))" },
+                          children: "No results found"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "p",
+                        {
+                          className: "text-xs mt-1",
+                          style: { color: "oklch(0.65 0.04 55)" },
+                          children: "Try a different name or file name."
                         }
                       )
                     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
@@ -43124,7 +43213,7 @@ function AdminPage({ onNavigateHome }) {
                           }
                         )
                       ] }) }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: uploads.map((entry, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: (filteredUploads ?? []).map((entry, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
                         motion.tr,
                         {
                           initial: { opacity: 0, y: 8 },

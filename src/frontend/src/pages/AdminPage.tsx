@@ -40,11 +40,13 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
+  Search,
   Shield,
   Trash2,
   Upload,
   Users,
   X,
+  XCircle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -332,6 +334,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -356,6 +359,17 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     uploads.length > 0 &&
     selectedIds.size === uploads.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const filteredUploads = uploads
+    ? uploads.filter((u) => {
+        const q = searchQuery.toLowerCase().trim();
+        if (!q) return true;
+        return (
+          u.fileName.toLowerCase().includes(q) ||
+          u.uploaderName.toLowerCase().includes(q)
+        );
+      })
+    : null;
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -896,7 +910,9 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   </h3>
                   {uploads && (
                     <Badge variant="secondary" className="text-xs">
-                      {uploads.length}
+                      {searchQuery
+                        ? `${filteredUploads?.length ?? 0} / ${uploads.length}`
+                        : uploads.length}
                     </Badge>
                   )}
                   {selectedIds.size > 0 && (
@@ -1020,6 +1036,36 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   )}
                 </div>
               </div>
+              {/* Search bar */}
+              <div className="px-5 py-3 border-b border-border/30">
+                <div className="relative w-full max-w-sm">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+                    style={{ color: "oklch(0.65 0.04 55)" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search by name or uploader..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-8 py-1.5 text-sm rounded-lg border border-border/50 bg-transparent outline-none focus:ring-1 focus:ring-border"
+                    style={{ color: "oklch(var(--hero-brown))" }}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                      aria-label="Clear search"
+                    >
+                      <XCircle
+                        className="w-3.5 h-3.5"
+                        style={{ color: "oklch(0.65 0.04 55)" }}
+                      />
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {uploadsLoading ? (
                 <div className="p-5 space-y-3">
@@ -1052,6 +1098,25 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   >
                     Share the upload link with guests to start collecting
                     memories.
+                  </p>
+                </div>
+              ) : filteredUploads && filteredUploads.length === 0 ? (
+                <div className="py-16 text-center">
+                  <Search
+                    className="w-10 h-10 mx-auto mb-3 opacity-30"
+                    style={{ color: "oklch(var(--coral-primary))" }}
+                  />
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: "oklch(var(--muted-foreground))" }}
+                  >
+                    No results found
+                  </p>
+                  <p
+                    className="text-xs mt-1"
+                    style={{ color: "oklch(0.65 0.04 55)" }}
+                  >
+                    Try a different name or file name.
                   </p>
                 </div>
               ) : (
@@ -1116,7 +1181,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     </TableHeader>
                     <TableBody>
                       <AnimatePresence>
-                        {uploads.map((entry, idx) => (
+                        {(filteredUploads ?? []).map((entry, idx) => (
                           <motion.tr
                             key={entry.blobId}
                             initial={{ opacity: 0, y: 8 }}
