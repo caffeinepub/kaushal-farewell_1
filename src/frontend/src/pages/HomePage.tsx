@@ -8,17 +8,20 @@ import {
   CheckCircle2,
   ChevronRight,
   CloudUpload,
+  Download,
   Film,
   Heart,
   ImageIcon,
   Info,
   Loader2,
+  QrCode,
   Star,
   Upload,
   Video,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { QRCodeCanvas } from "qrcode.react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUploadMemory } from "../hooks/useQueries";
@@ -58,6 +61,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const qrCanvasRef = useRef<HTMLDivElement>(null);
   const uploadMutation = useUploadMemory();
 
   const addFiles = useCallback((newFiles: File[]) => {
@@ -174,6 +178,16 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
     setUploaderName("");
     setMessage("");
     setUploadSuccess(false);
+  };
+
+  const handleDownloadQR = () => {
+    const canvas = qrCanvasRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kaushal-farewell-qr.png";
+    a.click();
   };
 
   const overallProgress =
@@ -846,6 +860,89 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
             </motion.div>
           </div>
         </section>
+
+        {/* QR Code Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="px-4 pb-10"
+        >
+          <div className="max-w-2xl mx-auto">
+            <div
+              className="rounded-3xl shadow-card p-6 sm:p-8"
+              style={{ backgroundColor: "oklch(1 0 0)" }}
+            >
+              {/* Card header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                  }}
+                >
+                  <QrCode className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2
+                    className="font-display font-bold text-xl"
+                    style={{ color: "oklch(var(--hero-brown))" }}
+                  >
+                    Scan to Share
+                  </h2>
+                  <p
+                    className="text-sm"
+                    style={{ color: "oklch(var(--muted-foreground))" }}
+                  >
+                    Share this page with friends via QR code
+                  </p>
+                </div>
+              </div>
+
+              {/* QR code centered */}
+              <div className="flex flex-col items-center gap-4">
+                <div
+                  ref={qrCanvasRef}
+                  className="inline-block rounded-2xl p-4"
+                  style={{
+                    border: "2px dashed oklch(0.88 0.03 55)",
+                  }}
+                >
+                  <QRCodeCanvas
+                    value={window.location.origin}
+                    size={200}
+                    level="H"
+                    includeMargin
+                    fgColor="oklch(0.38 0.09 35)"
+                    bgColor="#ffffff"
+                  />
+                </div>
+
+                <p
+                  className="text-xs"
+                  style={{ color: "oklch(var(--muted-foreground))" }}
+                >
+                  Point your camera at this code to open the page
+                </p>
+
+                <Button
+                  type="button"
+                  onClick={handleDownloadQR}
+                  className="rounded-full text-white font-semibold px-6 shadow-sm"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                  }}
+                  data-ocid="qr.download.button"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download QR Code
+                </Button>
+              </div>
+            </div>
+          </div>
+        </motion.section>
       </main>
 
       {/* Footer */}
