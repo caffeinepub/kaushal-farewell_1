@@ -20819,82 +20819,6 @@ function Skeleton({ className, ...props }) {
     }
   );
 }
-function Table({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      "data-slot": "table-container",
-      className: "relative w-full overflow-x-auto",
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "table",
-        {
-          "data-slot": "table",
-          className: cn("w-full caption-bottom text-sm", className),
-          ...props
-        }
-      )
-    }
-  );
-}
-function TableHeader({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "thead",
-    {
-      "data-slot": "table-header",
-      className: cn("[&_tr]:border-b", className),
-      ...props
-    }
-  );
-}
-function TableBody({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "tbody",
-    {
-      "data-slot": "table-body",
-      className: cn("[&_tr:last-child]:border-0", className),
-      ...props
-    }
-  );
-}
-function TableRow({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "tr",
-    {
-      "data-slot": "table-row",
-      className: cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
-        className
-      ),
-      ...props
-    }
-  );
-}
-function TableHead({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "th",
-    {
-      "data-slot": "table-head",
-      className: cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      ),
-      ...props
-    }
-  );
-}
-function TableCell({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "td",
-    {
-      "data-slot": "table-cell",
-      className: cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      ),
-      ...props
-    }
-  );
-}
 const LayoutGroupContext = reactExports.createContext({});
 function useConstant(init) {
   const ref = reactExports.useRef(null);
@@ -42088,7 +42012,22 @@ const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
 const SESSION_TIMEOUT_MS = 30 * 60 * 1e3;
 const LS_TOKEN_KEY = "kf-admin-token";
-const AUTO_REFRESH_MS = 2e3;
+const AUTO_REFRESH_MS = 15e3;
+const GD = {
+  bg: "#f8f9fa",
+  white: "#ffffff",
+  blue: "#1a73e8",
+  blueBg: "#e8f0fe",
+  textPrimary: "#202124",
+  textSecondary: "#5f6368",
+  border: "#dadce0",
+  red: "#d93025",
+  redBg: "#fce8e6",
+  greenBg: "#e6f4ea",
+  green: "#137333",
+  rowHover: "#f1f3f4",
+  selectedRow: "#e8f0fe"
+};
 function getFileExt(fileName) {
   var _a3;
   return ((_a3 = fileName.split(".").pop()) == null ? void 0 : _a3.toLowerCase()) ?? "";
@@ -42110,29 +42049,43 @@ function formatTimestamp(ts) {
     minute: "2-digit"
   });
 }
-function getFileTypeIcon(fileName) {
+function getFileTypeChip(fileName) {
   const ext = getFileExt(fileName);
-  if (IMAGE_EXTS.includes(ext))
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      FileImage,
+  if (IMAGE_EXTS.includes(ext)) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "span",
       {
-        className: "w-4 h-4",
-        style: { color: "oklch(var(--coral-primary))" }
+        className: "inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium",
+        style: { backgroundColor: GD.blueBg, color: GD.blue },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(FileImage, { className: "w-3 h-3" }),
+          "Image"
+        ]
       }
     );
-  if (VIDEO_EXTS.includes(ext))
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      FileVideo,
+  }
+  if (VIDEO_EXTS.includes(ext)) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "span",
       {
-        className: "w-4 h-4",
-        style: { color: "oklch(var(--coral-primary))" }
+        className: "inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium",
+        style: { backgroundColor: GD.greenBg, color: GD.green },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(FileVideo, { className: "w-3 h-3" }),
+          "Video"
+        ]
       }
     );
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    File,
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "span",
     {
-      className: "w-4 h-4",
-      style: { color: "oklch(var(--muted-foreground))" }
+      className: "inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium",
+      style: { backgroundColor: "#f1f3f4", color: GD.textSecondary },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(File, { className: "w-3 h-3" }),
+        "File"
+      ]
     }
   );
 }
@@ -42158,23 +42111,35 @@ function MediaThumbnail({
       {
         type: "button",
         onClick,
-        className: "relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring",
-        style: { width: 64, height: 48 },
+        className: "relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none",
+        style: {
+          width: 56,
+          height: 40,
+          borderRadius: 4,
+          border: `1px solid ${GD.border}`
+        },
         "aria-label": "Preview image",
         children: [
-          (!loaded || !url) && /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0 rounded-lg" }),
+          (!loaded || !url) && /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0", style: { borderRadius: 4 } }),
           url && /* @__PURE__ */ jsxRuntimeExports.jsx(
             "img",
             {
               src: url,
               alt: fileName,
-              className: "w-full h-full object-cover rounded-lg",
-              style: { display: loaded ? "block" : "none" },
+              className: "w-full h-full object-cover",
+              style: { display: loaded ? "block" : "none", borderRadius: 4 },
               onLoad: () => setLoaded(true),
               onError: () => setLoaded(true)
             }
           ),
-          loaded && url && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" }) })
+          loaded && url && /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              className: "absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity",
+              style: { background: "rgba(0,0,0,0.25)", borderRadius: 4 },
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3 h-3 text-white" })
+            }
+          )
         ]
       }
     );
@@ -42185,8 +42150,14 @@ function MediaThumbnail({
       {
         type: "button",
         onClick,
-        className: "relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity bg-black focus:outline-none focus:ring-2 focus:ring-ring",
-        style: { width: 80, height: 48 },
+        className: "relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none",
+        style: {
+          width: 64,
+          height: 40,
+          borderRadius: 4,
+          border: `1px solid ${GD.border}`,
+          background: "#000"
+        },
         "aria-label": "Preview video",
         children: [
           url ? /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -42195,19 +42166,26 @@ function MediaThumbnail({
               src: url,
               muted: true,
               preload: "metadata",
-              className: "w-full h-full object-cover rounded-lg",
-              style: { pointerEvents: "none" },
+              className: "w-full h-full object-cover",
+              style: { pointerEvents: "none", borderRadius: 4 },
               children: /* @__PURE__ */ jsxRuntimeExports.jsx("track", { kind: "captions" })
             }
-          ) : /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0 rounded-lg" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          ) : /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "absolute inset-0", style: { borderRadius: 4 } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
             "div",
             {
-              className: "w-6 h-6 rounded-full flex items-center justify-center",
-              style: { backgroundColor: "oklch(0.63 0.14 29 / 0.9)" },
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-white text-xs ml-0.5", children: "▶" })
+              className: "absolute inset-0 flex items-center justify-center",
+              style: { background: "rgba(0,0,0,0.35)", borderRadius: 4 },
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: "w-5 h-5 rounded-full flex items-center justify-center",
+                  style: { background: "rgba(255,255,255,0.9)" },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "#202124", fontSize: 8, marginLeft: 1 }, children: "▶" })
+                }
+              )
             }
-          ) })
+          )
         ]
       }
     );
@@ -42215,9 +42193,15 @@ function MediaThumbnail({
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
-      className: "flex-shrink-0 rounded-lg border border-border/40 flex items-center justify-center",
-      style: { width: 48, height: 48, backgroundColor: "oklch(0.96 0.015 55)" },
-      children: getFileTypeIcon(fileName)
+      className: "flex-shrink-0 flex items-center justify-center",
+      style: {
+        width: 40,
+        height: 40,
+        borderRadius: 4,
+        border: `1px solid ${GD.border}`,
+        background: GD.bg
+      },
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(File, { className: "w-4 h-4", style: { color: GD.textSecondary } })
     }
   );
 }
@@ -42243,45 +42227,41 @@ function MediaPreviewModal({
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: !!entry, onOpenChange: (open) => !open && onClose(), children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     DialogContent,
     {
-      className: "max-w-3xl w-full p-0 overflow-hidden rounded-2xl",
-      style: { backgroundColor: "oklch(0.14 0.02 30)" },
+      className: "max-w-3xl w-full p-0 overflow-hidden",
+      style: { borderRadius: 8, border: `1px solid ${GD.border}` },
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           DialogHeader,
           {
-            className: "px-5 pt-4 pb-3 border-b",
-            style: { borderColor: "oklch(1 0 0 / 0.1)" },
+            className: "px-5 pt-4 pb-3",
+            style: { borderBottom: `1px solid ${GD.border}` },
             children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   DialogTitle,
                   {
-                    className: "text-base font-semibold leading-tight",
-                    style: { color: "oklch(0.95 0.02 55)" },
+                    className: "text-base font-medium leading-tight",
+                    style: {
+                      color: GD.textPrimary,
+                      fontFamily: "system-ui, sans-serif"
+                    },
                     children: entry.fileName
                   }
                 ),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "p",
-                  {
-                    className: "text-xs mt-0.5",
-                    style: { color: "oklch(0.65 0.04 40)" },
-                    children: [
-                      "Uploaded by",
-                      " ",
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "oklch(0.78 0.1 30)" }, children: entry.uploaderName })
-                    ]
-                  }
-                )
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs mt-0.5", style: { color: GD.textSecondary }, children: [
+                  "Uploaded by",
+                  " ",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: GD.blue }, children: entry.uploaderName })
+                ] })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
                 {
                   type: "button",
                   onClick: onClose,
-                  className: "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors",
-                  style: { backgroundColor: "oklch(1 0 0 / 0.1)" },
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(X$1, { className: "w-4 h-4", style: { color: "oklch(0.85 0.02 55)" } })
+                  className: "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100",
+                  "aria-label": "Close preview",
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(X$1, { className: "w-4 h-4", style: { color: GD.textSecondary } })
                 }
               )
             ] })
@@ -42291,14 +42271,14 @@ function MediaPreviewModal({
           "div",
           {
             className: "flex items-center justify-center p-4",
-            style: { minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" },
-            children: !url ? /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "w-full h-64 rounded-lg" }) : isImage(entry.fileName) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            style: { minHeight: 320, background: "#f1f3f4" },
+            children: !url ? /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "w-full h-64 rounded" }) : isImage(entry.fileName) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
               "img",
               {
                 src: url,
                 alt: entry.fileName,
-                className: "max-w-full max-h-[65vh] object-contain rounded-lg",
-                style: { boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" }
+                className: "max-w-full max-h-[65vh] object-contain rounded",
+                style: { boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }
               }
             ) : isVideo(entry.fileName) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
               "video",
@@ -42306,8 +42286,8 @@ function MediaPreviewModal({
                 src: url,
                 controls: true,
                 autoPlay: true,
-                className: "max-w-full max-h-[65vh] rounded-lg",
-                style: { boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" },
+                className: "max-w-full max-h-[65vh] rounded",
+                style: { boxShadow: "0 2px 10px rgba(0,0,0,0.2)" },
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx("track", { kind: "captions" })
               }
             ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-12", children: [
@@ -42315,16 +42295,42 @@ function MediaPreviewModal({
                 File,
                 {
                   className: "w-12 h-12 mx-auto mb-3",
-                  style: { color: "oklch(0.65 0.04 40)" }
+                  style: { color: GD.textSecondary }
                 }
               ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: "oklch(0.65 0.04 40)" }, children: "Preview not available." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: GD.textSecondary }, children: "Preview not available." })
             ] })
           }
         )
       ]
     }
   ) });
+}
+function FilterChip({
+  label,
+  active,
+  onClick,
+  icon
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "button",
+    {
+      type: "button",
+      onClick,
+      className: "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all",
+      style: {
+        borderRadius: 20,
+        border: active ? `1px solid ${GD.blue}` : `1px solid ${GD.border}`,
+        background: active ? GD.blueBg : GD.white,
+        color: active ? GD.blue : GD.textSecondary,
+        cursor: "pointer"
+      },
+      children: [
+        icon,
+        label
+      ]
+    }
+  );
 }
 function AdminPage({ onNavigateHome }) {
   const [isLoggedIn, setIsLoggedIn] = reactExports.useState(false);
@@ -42342,6 +42348,7 @@ function AdminPage({ onNavigateHome }) {
   const [isDeletingSelected, setIsDeletingSelected] = reactExports.useState(false);
   const [isDeletingAll, setIsDeletingAll] = reactExports.useState(false);
   const [searchQuery, setSearchQuery] = reactExports.useState("");
+  const [fileTypeFilter, setFileTypeFilter] = reactExports.useState("all");
   const [selectedIds, setSelectedIds] = reactExports.useState(/* @__PURE__ */ new Set());
   const [uploads, setUploads] = reactExports.useState(null);
   const [stats, setStats] = reactExports.useState(null);
@@ -42357,8 +42364,9 @@ function AdminPage({ onNavigateHome }) {
   const someSelected = selectedIds.size > 0 && !allSelected;
   const filteredUploads = uploads ? uploads.filter((u) => {
     const q2 = searchQuery.toLowerCase().trim();
-    if (!q2) return true;
-    return u.fileName.toLowerCase().includes(q2) || u.uploaderName.toLowerCase().includes(q2);
+    const matchesSearch = !q2 || u.fileName.toLowerCase().includes(q2) || u.uploaderName.toLowerCase().includes(q2);
+    const matchesType = fileTypeFilter === "all" || fileTypeFilter === "images" && isImage(u.fileName) || fileTypeFilter === "videos" && isVideo(u.fileName);
+    return matchesSearch && matchesType;
   }) : null;
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -42635,615 +42643,767 @@ function AdminPage({ onNavigateHome }) {
       autoRefreshRef.current = null;
     }
   };
+  if (!isLoggedIn) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        className: "min-h-screen flex flex-col",
+        style: {
+          background: GD.bg,
+          fontFamily: "system-ui, -apple-system, sans-serif"
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "header",
+            {
+              className: "flex items-center px-6 py-3 shadow-sm",
+              style: {
+                background: GD.white,
+                borderBottom: `1px solid ${GD.border}`
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: onNavigateHome,
+                    className: "flex items-center gap-2 text-sm font-medium transition-colors hover:text-blue-600",
+                    style: { color: GD.textSecondary },
+                    "data-ocid": "admin.back.link",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "w-4 h-4" }),
+                      "Back to Home"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mx-4 w-px h-4", style: { background: GD.border } }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-5 h-5", style: { color: GD.blue } }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "span",
+                    {
+                      className: "font-medium text-sm",
+                      style: { color: GD.textPrimary },
+                      children: "Kaushal Farewell Admin"
+                    }
+                  )
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "flex-1 flex items-center justify-center px-4 py-16", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            motion.div,
+            {
+              initial: { opacity: 0, y: 24 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 },
+              className: "w-full max-w-sm",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "div",
+                {
+                  className: "p-8",
+                  style: {
+                    background: GD.white,
+                    border: `1px solid ${GD.border}`,
+                    borderRadius: 8,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
+                  },
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center mb-6", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "div",
+                        {
+                          className: "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4",
+                          style: { background: GD.blueBg },
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-6 h-6", style: { color: GD.blue } })
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "h2",
+                        {
+                          className: "text-2xl font-normal mb-1",
+                          style: {
+                            color: GD.textPrimary,
+                            fontFamily: "system-ui, sans-serif"
+                          },
+                          children: "Sign in"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm", style: { color: GD.textSecondary }, children: "to Admin Panel" })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleLogin, className: "space-y-4", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          Label,
+                          {
+                            htmlFor: "admin-email",
+                            className: "text-sm font-medium",
+                            style: { color: GD.textPrimary },
+                            children: "Email"
+                          }
+                        ),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          Input,
+                          {
+                            id: "admin-email",
+                            type: "email",
+                            value: email,
+                            onChange: (e) => setEmail(e.target.value),
+                            placeholder: "admin@example.com",
+                            disabled: !!lockoutUntil,
+                            className: "h-10 text-sm",
+                            style: {
+                              borderColor: GD.border,
+                              borderRadius: 4,
+                              color: GD.textPrimary
+                            },
+                            "data-ocid": "admin.email.input"
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          Label,
+                          {
+                            htmlFor: "admin-password",
+                            className: "text-sm font-medium",
+                            style: { color: GD.textPrimary },
+                            children: "Password"
+                          }
+                        ),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          Input,
+                          {
+                            id: "admin-password",
+                            type: "password",
+                            value: password,
+                            onChange: (e) => setPassword(e.target.value),
+                            placeholder: "••••••••",
+                            required: true,
+                            disabled: !!lockoutUntil,
+                            className: "h-10 text-sm",
+                            style: {
+                              borderColor: GD.border,
+                              borderRadius: 4,
+                              color: GD.textPrimary
+                            },
+                            "data-ocid": "admin.password.input"
+                          }
+                        )
+                      ] }),
+                      loginError && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "div",
+                        {
+                          className: "flex items-center gap-2 px-3 py-2 rounded text-sm",
+                          style: {
+                            background: GD.redBg,
+                            color: GD.red,
+                            border: "1px solid #f5c6c4",
+                            borderRadius: 4
+                          },
+                          "data-ocid": "admin.login.error_state",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(CircleX, { className: "w-4 h-4 flex-shrink-0" }),
+                            loginError
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-end pt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Button,
+                        {
+                          type: "submit",
+                          disabled: !!lockoutUntil || isLoginLoading,
+                          className: "px-8 h-9 text-sm font-medium text-white",
+                          style: {
+                            background: isLoginLoading || lockoutUntil ? "#ccc" : GD.blue,
+                            borderRadius: 4,
+                            border: "none"
+                          },
+                          "data-ocid": "admin.login.submit_button",
+                          children: isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
+                            "Signing in…"
+                          ] }) : "Sign In"
+                        }
+                      ) })
+                    ] })
+                  ]
+                }
+              )
+            }
+          ) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "footer",
+            {
+              className: "py-4 px-6 text-center text-xs",
+              style: {
+                color: GD.textSecondary,
+                borderTop: `1px solid ${GD.border}`
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                  "Created by",
+                  " ",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", style: { color: GD.textPrimary }, children: "Dhruv Dhameliya" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mx-2", children: "·" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "a",
+                  {
+                    href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    className: "hover:underline",
+                    style: { color: GD.blue },
+                    children: [
+                      "© ",
+                      (/* @__PURE__ */ new Date()).getFullYear(),
+                      ". Built with caffeine.ai"
+                    ]
+                  }
+                )
+              ]
+            }
+          )
+        ]
+      }
+    );
+  }
+  const imageCount = uploads ? uploads.filter((u) => isImage(u.fileName)).length : 0;
+  const videoCount = uploads ? uploads.filter((u) => isVideo(u.fileName)).length : 0;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
     {
-      className: "min-h-screen",
+      className: "min-h-screen flex flex-col",
       style: {
-        background: "linear-gradient(160deg, oklch(0.93 0.04 55) 0%, oklch(0.88 0.07 35) 50%, oklch(0.82 0.1 25) 100%)"
+        background: GD.bg,
+        fontFamily: "system-ui, -apple-system, sans-serif"
       },
       children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "header",
           {
-            className: "sticky top-0 z-50 shadow-header",
-            style: { backgroundColor: "oklch(var(--header-bg))" },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-6xl mx-auto px-4 sm:px-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between h-16", children: [
+            className: "sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 h-14",
+            style: {
+              background: GD.white,
+              borderBottom: `1px solid ${GD.border}`,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+            },
+            children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs(
                   "button",
                   {
                     type: "button",
                     onClick: onNavigateHome,
-                    className: "flex items-center gap-2 text-sm font-medium transition-colors",
-                    style: { color: "oklch(0.55 0.06 40)" },
+                    className: "flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100",
+                    style: { color: GD.textSecondary },
+                    "data-ocid": "admin.back.link",
                     children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "w-4 h-4" }),
-                      "Back"
+                      "Home"
                     ]
                   }
                 ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-px h-4 bg-border" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-px h-5", style: { background: GD.border } }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "div",
-                    {
-                      className: "w-7 h-7 rounded-full flex items-center justify-center",
-                      style: {
-                        background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
-                      },
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-3.5 h-3.5 text-white" })
-                    }
-                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-5 h-5", style: { color: GD.blue } }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "span",
                     {
-                      className: "font-display font-bold text-base",
-                      style: { color: "oklch(var(--hero-brown))" },
+                      className: "font-medium text-base",
+                      style: { color: GD.textPrimary },
                       children: "Admin Panel"
                     }
                   )
                 ] })
               ] }),
-              isLoggedIn && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                Button,
-                {
-                  onClick: handleSignOut,
-                  className: "rounded-full font-semibold px-6 text-white",
-                  style: { background: "oklch(0.55 0.06 40)" },
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(LogOut, { className: "w-4 h-4 mr-2" }),
-                    "Sign Out"
-                  ]
-                }
-              )
-            ] }) })
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                autoRefreshActive && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "span",
+                  {
+                    className: "hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full",
+                    style: {
+                      background: GD.greenBg,
+                      color: GD.green,
+                      border: "1px solid #ceead6"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          className: "w-1.5 h-1.5 rounded-full animate-pulse",
+                          style: { background: GD.green }
+                        }
+                      ),
+                      "Auto-refresh on"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: handleSignOut,
+                    className: "flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100",
+                    style: { color: GD.textSecondary },
+                    "data-ocid": "admin.signout.button",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(LogOut, { className: "w-4 h-4" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Sign out" })
+                    ]
+                  }
+                )
+              ] })
+            ]
           }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 py-8", children: !isLoggedIn ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          motion.div,
-          {
-            initial: { opacity: 0, y: 20 },
-            animate: { opacity: 1, y: 0 },
-            className: "flex flex-col items-center justify-center py-16",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "div",
-              {
-                className: "w-full max-w-sm rounded-2xl shadow-card p-8",
-                style: { backgroundColor: "oklch(1 0 0)" },
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center mb-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "div",
-                    {
-                      className: "w-16 h-16 rounded-full flex items-center justify-center",
-                      style: {
-                        background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
-                      },
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-7 h-7 text-white" })
-                    }
-                  ) }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "h2",
-                    {
-                      className: "font-display font-bold text-2xl text-center mb-6",
-                      style: { color: "oklch(var(--hero-brown))" },
-                      children: "Admin Login"
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleLogin, className: "space-y-4", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Label,
-                        {
-                          htmlFor: "admin-email",
-                          className: "text-sm font-medium",
-                          style: { color: "oklch(var(--hero-brown))" },
-                          children: "Email"
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Input,
-                        {
-                          id: "admin-email",
-                          type: "email",
-                          value: email,
-                          onChange: (e) => setEmail(e.target.value),
-                          placeholder: "admin@example.com",
-                          disabled: !!lockoutUntil,
-                          className: "rounded-xl border-border/60 focus:border-coral/60"
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Label,
-                        {
-                          htmlFor: "admin-password",
-                          className: "text-sm font-medium",
-                          style: { color: "oklch(var(--hero-brown))" },
-                          children: "Password"
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Input,
-                        {
-                          id: "admin-password",
-                          type: "password",
-                          value: password,
-                          onChange: (e) => setPassword(e.target.value),
-                          placeholder: "••••••••",
-                          required: true,
-                          disabled: !!lockoutUntil,
-                          className: "rounded-xl border-border/60 focus:border-coral/60"
-                        }
-                      )
-                    ] }),
-                    loginError && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "p",
-                      {
-                        className: "text-sm text-center",
-                        style: { color: "oklch(0.5 0.18 25)" },
-                        children: loginError
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      Button,
-                      {
-                        type: "submit",
-                        disabled: !!lockoutUntil || isLoginLoading,
-                        className: "w-full rounded-xl font-semibold text-white mt-2",
-                        style: {
-                          background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
-                        },
-                        children: isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
-                          "Signing in..."
-                        ] }) : "Sign In"
-                      }
-                    )
-                  ] })
-                ]
-              }
-            )
-          }
-        ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-5", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
           {
             initial: { opacity: 0, y: 16 },
             animate: { opacity: 1, y: 0 },
-            className: "space-y-6",
+            transition: { duration: 0.3 },
+            className: "space-y-5",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
-                  {
-                    className: "rounded-2xl p-5 shadow-card",
-                    style: { backgroundColor: "oklch(1 0 0)" },
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-3", children: [
+                {
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "w-5 h-5", style: { color: GD.blue } }),
+                  value: totalUploads,
+                  label: "Total Files",
+                  bg: GD.blueBg,
+                  ocid: "admin.total.card"
+                },
+                {
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Users, { className: "w-5 h-5", style: { color: "#7b1fa2" } }),
+                  value: uniqueUploaders,
+                  label: "Contributors",
+                  bg: "#f3e5f5",
+                  ocid: "admin.contributors.card"
+                },
+                {
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(FileImage, { className: "w-5 h-5", style: { color: GD.blue } }),
+                  value: imageCount,
+                  label: "Images",
+                  bg: GD.blueBg,
+                  ocid: "admin.images.card"
+                },
+                {
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(FileVideo, { className: "w-5 h-5", style: { color: GD.green } }),
+                  value: videoCount,
+                  label: "Videos",
+                  bg: GD.greenBg,
+                  ocid: "admin.videos.card"
+                }
+              ].map((stat) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "div",
+                {
+                  className: "p-4 flex items-center gap-3",
+                  style: {
+                    background: GD.white,
+                    border: `1px solid ${GD.border}`,
+                    borderRadius: 8,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                  },
+                  "data-ocid": stat.ocid,
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "div",
+                      {
+                        className: "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
+                        style: { background: stat.bg },
+                        children: stat.icon
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "div",
+                        "p",
                         {
-                          className: "w-10 h-10 rounded-xl flex items-center justify-center",
-                          style: { backgroundColor: "oklch(0.93 0.04 55)" },
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            Upload,
-                            {
-                              className: "w-5 h-5",
-                              style: { color: "oklch(var(--coral-primary))" }
-                            }
-                          )
+                          className: "text-xl font-semibold",
+                          style: { color: GD.textPrimary },
+                          children: stat.value
                         }
                       ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "p",
-                          {
-                            className: "text-2xl font-display font-bold",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: totalUploads
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "p",
-                          {
-                            className: "text-xs",
-                            style: { color: "oklch(var(--muted-foreground))" },
-                            children: "Total Uploads"
-                          }
-                        )
-                      ] })
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: GD.textSecondary }, children: stat.label })
                     ] })
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
-                  {
-                    className: "rounded-2xl p-5 shadow-card",
-                    style: { backgroundColor: "oklch(1 0 0)" },
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "div",
-                        {
-                          className: "w-10 h-10 rounded-xl flex items-center justify-center",
-                          style: { backgroundColor: "oklch(0.93 0.04 55)" },
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            Users,
-                            {
-                              className: "w-5 h-5",
-                              style: { color: "oklch(var(--coral-primary))" }
-                            }
-                          )
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "p",
-                          {
-                            className: "text-2xl font-display font-bold",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: uniqueUploaders
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "p",
-                          {
-                            className: "text-xs",
-                            style: { color: "oklch(var(--muted-foreground))" },
-                            children: "Contributors"
-                          }
-                        )
-                      ] })
-                    ] })
-                  }
-                )
-              ] }),
+                  ]
+                },
+                stat.label
+              )) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "div",
                 {
-                  className: "rounded-2xl shadow-card overflow-hidden",
-                  style: { backgroundColor: "oklch(1 0 0)" },
+                  style: {
+                    background: GD.white,
+                    border: `1px solid ${GD.border}`,
+                    borderRadius: 8,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                    overflow: "hidden"
+                  },
                   children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border/50", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          Heart,
-                          {
-                            className: "w-4 h-4",
-                            style: { color: "oklch(var(--coral-primary))" }
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "h3",
-                          {
-                            className: "font-display font-bold text-base",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "All Uploaded Memories"
-                          }
-                        ),
-                        uploads && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "secondary", className: "text-xs", children: searchQuery ? `${(filteredUploads == null ? void 0 : filteredUploads.length) ?? 0} / ${uploads.length}` : uploads.length }),
-                        selectedIds.size > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          Badge,
-                          {
-                            className: "text-xs text-white",
-                            style: { backgroundColor: "oklch(0.63 0.14 29)" },
-                            children: [
-                              selectedIds.size,
-                              " selected"
-                            ]
-                          }
-                        )
-                      ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
-                        autoRefreshActive && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          "span",
-                          {
-                            className: "flex items-center gap-1 text-xs px-2 py-0.5 rounded-full",
-                            style: {
-                              backgroundColor: "oklch(0.93 0.06 142 / 0.15)",
-                              color: "oklch(0.45 0.12 142)"
-                            },
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                                "span",
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        className: "flex flex-wrap items-center justify-between gap-3 px-5 py-3",
+                        style: { borderBottom: `1px solid ${GD.border}` },
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "h3",
+                              {
+                                className: "font-medium text-base",
+                                style: { color: GD.textPrimary },
+                                children: "All Uploads"
+                              }
+                            ),
+                            uploads && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              Badge,
+                              {
+                                variant: "secondary",
+                                className: "text-xs",
+                                style: {
+                                  background: GD.bg,
+                                  color: GD.textSecondary,
+                                  border: `1px solid ${GD.border}`
+                                },
+                                children: searchQuery || fileTypeFilter !== "all" ? `${(filteredUploads == null ? void 0 : filteredUploads.length) ?? 0} / ${uploads.length}` : uploads.length
+                              }
+                            ),
+                            selectedIds.size > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                              Badge,
+                              {
+                                className: "text-xs text-white",
+                                style: { background: GD.blue },
+                                children: [
+                                  selectedIds.size,
+                                  " selected"
+                                ]
+                              }
+                            )
+                          ] }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                              Button,
+                              {
+                                variant: "ghost",
+                                size: "sm",
+                                onClick: () => sessionToken && fetchAdminData(sessionToken),
+                                className: "gap-1.5 text-xs h-8",
+                                style: { color: GD.textSecondary, borderRadius: 4 },
+                                "data-ocid": "admin.refresh.button",
+                                children: [
+                                  /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: "w-3.5 h-3.5" }),
+                                  "Refresh"
+                                ]
+                              }
+                            ),
+                            selectedIds.size > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                                Button,
                                 {
-                                  className: "w-1.5 h-1.5 rounded-full animate-pulse",
-                                  style: { backgroundColor: "oklch(0.55 0.15 142)" }
-                                }
-                              ),
-                              "Live"
-                            ]
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          Button,
-                          {
-                            variant: "ghost",
-                            size: "sm",
-                            onClick: () => sessionToken && fetchAdminData(sessionToken),
-                            className: "gap-1.5 text-xs",
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: "w-3.5 h-3.5" }),
-                              "Refresh"
-                            ]
-                          }
-                        ),
-                        selectedIds.size > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                            Button,
-                            {
-                              size: "sm",
-                              disabled: isDeletingSelected,
-                              className: "gap-1.5 text-xs text-white rounded-lg",
-                              style: { background: "oklch(0.55 0.18 25)" },
-                              children: [
-                                isDeletingSelected ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" }),
-                                "Delete Selected (",
-                                selectedIds.size,
-                                ")"
-                              ]
-                            }
-                          ) }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogTitle, { children: [
-                                "Delete ",
-                                selectedIds.size,
-                                " selected file(s)?"
-                              ] }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogDescription, { children: [
-                                "This will permanently remove the selected",
-                                " ",
-                                selectedIds.size,
-                                " file(s) and cannot be undone."
-                              ] })
-                            ] }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { children: "Cancel" }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                                AlertDialogAction,
-                                {
-                                  onClick: handleDeleteSelected,
-                                  className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                                  size: "sm",
+                                  disabled: isDeletingSelected,
+                                  className: "gap-1.5 text-xs h-8 text-white",
+                                  style: {
+                                    background: GD.red,
+                                    borderRadius: 4,
+                                    border: "none"
+                                  },
+                                  "data-ocid": "admin.delete_selected.button",
                                   children: [
+                                    isDeletingSelected ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" }),
+                                    "Delete Selected (",
+                                    selectedIds.size,
+                                    ")"
+                                  ]
+                                }
+                              ) }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
+                                /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
+                                  /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogTitle, { children: [
                                     "Delete ",
                                     selectedIds.size,
-                                    " File(s)"
-                                  ]
-                                }
-                              )
-                            ] })
-                          ] })
-                        ] }),
-                        uploads && uploads.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                            Button,
-                            {
-                              size: "sm",
-                              variant: "outline",
-                              disabled: isDeletingAll,
-                              className: "gap-1.5 text-xs rounded-lg border-red-300/60 hover:border-red-400/60",
-                              style: { color: "oklch(0.5 0.18 25)" },
-                              children: [
-                                isDeletingAll ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" }),
-                                "Delete All"
-                              ]
-                            }
-                          ) }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTitle, { children: "Delete ALL uploads?" }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogDescription, { children: [
-                                "This will permanently remove all ",
-                                uploads.length,
-                                " ",
-                                "uploaded files and cannot be undone."
+                                    " selected file(s)?"
+                                  ] }),
+                                  /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogDescription, { children: [
+                                    "This will permanently remove the selected",
+                                    " ",
+                                    selectedIds.size,
+                                    " file(s) and cannot be undone."
+                                  ] })
+                                ] }),
+                                /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
+                                  /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { "data-ocid": "admin.delete_selected.cancel_button", children: "Cancel" }),
+                                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                                    AlertDialogAction,
+                                    {
+                                      onClick: handleDeleteSelected,
+                                      className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                                      "data-ocid": "admin.delete_selected.confirm_button",
+                                      children: [
+                                        "Delete ",
+                                        selectedIds.size,
+                                        " File(s)"
+                                      ]
+                                    }
+                                  )
+                                ] })
                               ] })
                             ] }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { children: "Cancel" }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                                AlertDialogAction,
+                            uploads && uploads.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                                Button,
                                 {
-                                  onClick: handleDeleteAll,
-                                  className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                                  size: "sm",
+                                  variant: "outline",
+                                  disabled: isDeletingAll,
+                                  className: "gap-1.5 text-xs h-8",
+                                  style: {
+                                    color: GD.red,
+                                    borderColor: "#f5c6c4",
+                                    borderRadius: 4
+                                  },
+                                  "data-ocid": "admin.delete_all.button",
                                   children: [
-                                    "Delete All ",
-                                    uploads.length,
-                                    " Files"
+                                    isDeletingAll ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" }),
+                                    "Delete All"
                                   ]
                                 }
-                              )
+                              ) }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
+                                /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
+                                  /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTitle, { children: "Delete ALL uploads?" }),
+                                  /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogDescription, { children: [
+                                    "This will permanently remove all ",
+                                    uploads.length,
+                                    " ",
+                                    "uploaded files and cannot be undone."
+                                  ] })
+                                ] }),
+                                /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
+                                  /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { "data-ocid": "admin.delete_all.cancel_button", children: "Cancel" }),
+                                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                                    AlertDialogAction,
+                                    {
+                                      onClick: handleDeleteAll,
+                                      className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                                      "data-ocid": "admin.delete_all.confirm_button",
+                                      children: [
+                                        "Delete All ",
+                                        uploads.length,
+                                        " Files"
+                                      ]
+                                    }
+                                  )
+                                ] })
+                              ] })
                             ] })
                           ] })
-                        ] })
-                      ] })
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-5 py-3 border-b border-border/30", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-full max-w-sm", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Search,
-                        {
-                          className: "absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none",
-                          style: { color: "oklch(0.65 0.04 55)" }
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          type: "text",
-                          placeholder: "Search by name or uploader...",
-                          value: searchQuery,
-                          onChange: (e) => setSearchQuery(e.target.value),
-                          className: "w-full pl-9 pr-8 py-1.5 text-sm rounded-lg border border-border/50 bg-transparent outline-none focus:ring-1 focus:ring-border",
-                          style: { color: "oklch(var(--hero-brown))" }
-                        }
-                      ),
-                      searchQuery && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
-                        {
-                          type: "button",
-                          onClick: () => setSearchQuery(""),
-                          className: "absolute right-2 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100",
-                          "aria-label": "Clear search",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            CircleX,
-                            {
-                              className: "w-3.5 h-3.5",
-                              style: { color: "oklch(0.65 0.04 55)" }
-                            }
-                          )
-                        }
-                      )
-                    ] }) }),
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        className: "flex flex-wrap items-center gap-3 px-5 py-3",
+                        style: {
+                          borderBottom: `1px solid ${GD.border}`,
+                          background: GD.bg
+                        },
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex-1 min-w-48 max-w-xs", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              Search,
+                              {
+                                className: "absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none",
+                                style: { color: GD.textSecondary }
+                              }
+                            ),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "input",
+                              {
+                                type: "text",
+                                placeholder: "Search files or uploaders…",
+                                value: searchQuery,
+                                onChange: (e) => setSearchQuery(e.target.value),
+                                className: "w-full pl-9 pr-8 py-1.5 text-sm outline-none",
+                                style: {
+                                  borderRadius: 20,
+                                  border: `1px solid ${GD.border}`,
+                                  background: GD.white,
+                                  color: GD.textPrimary
+                                },
+                                "data-ocid": "admin.search.input"
+                              }
+                            ),
+                            searchQuery && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "button",
+                              {
+                                type: "button",
+                                onClick: () => setSearchQuery(""),
+                                className: "absolute right-2.5 top-1/2 -translate-y-1/2",
+                                "aria-label": "Clear search",
+                                children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                  CircleX,
+                                  {
+                                    className: "w-3.5 h-3.5",
+                                    style: { color: GD.textSecondary }
+                                  }
+                                )
+                              }
+                            )
+                          ] }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              FilterChip,
+                              {
+                                label: "All",
+                                active: fileTypeFilter === "all",
+                                onClick: () => setFileTypeFilter("all"),
+                                icon: /* @__PURE__ */ jsxRuntimeExports.jsx(File, { className: "w-3.5 h-3.5" })
+                              }
+                            ),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              FilterChip,
+                              {
+                                label: "Images",
+                                active: fileTypeFilter === "images",
+                                onClick: () => setFileTypeFilter("images"),
+                                icon: /* @__PURE__ */ jsxRuntimeExports.jsx(FileImage, { className: "w-3.5 h-3.5" })
+                              }
+                            ),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              FilterChip,
+                              {
+                                label: "Videos",
+                                active: fileTypeFilter === "videos",
+                                onClick: () => setFileTypeFilter("videos"),
+                                icon: /* @__PURE__ */ jsxRuntimeExports.jsx(FileVideo, { className: "w-3.5 h-3.5" })
+                              }
+                            )
+                          ] })
+                        ]
+                      }
+                    ),
                     uploadsLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-5 space-y-3", children: [1, 2, 3, 4].map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-4 rounded" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-12 w-16 rounded-lg" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-10 w-14 rounded" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-48" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-36" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-28" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-20" })
-                    ] }, i)) }) : !uploads || uploads.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "py-16 text-center", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Heart,
+                    ] }, i)) }) : !uploads || uploads.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        className: "py-16 text-center",
+                        "data-ocid": "admin.uploads.empty_state",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            Upload,
+                            {
+                              className: "w-10 h-10 mx-auto mb-3",
+                              style: { color: GD.border }
+                            }
+                          ),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "p",
+                            {
+                              className: "text-sm font-medium",
+                              style: { color: GD.textPrimary },
+                              children: "No uploads yet"
+                            }
+                          ),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs mt-1", style: { color: GD.textSecondary }, children: "Share the upload link with guests to start collecting memories." })
+                        ]
+                      }
+                    ) : filteredUploads && filteredUploads.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        className: "py-16 text-center",
+                        "data-ocid": "admin.search.empty_state",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            Search,
+                            {
+                              className: "w-10 h-10 mx-auto mb-3",
+                              style: { color: GD.border }
+                            }
+                          ),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "p",
+                            {
+                              className: "text-sm font-medium",
+                              style: { color: GD.textPrimary },
+                              children: "No results found"
+                            }
+                          ),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs mt-1", style: { color: GD.textSecondary }, children: "Try a different search term or filter." })
+                        ]
+                      }
+                    ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "overflow-x-auto", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "div",
                         {
-                          className: "w-10 h-10 mx-auto mb-3 opacity-30",
-                          style: { color: "oklch(var(--coral-primary))" }
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "p",
-                        {
-                          className: "text-sm font-medium",
-                          style: { color: "oklch(var(--muted-foreground))" },
-                          children: "No uploads yet"
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "p",
-                        {
-                          className: "text-xs mt-1",
-                          style: { color: "oklch(0.65 0.04 55)" },
-                          children: "Share the upload link with guests to start collecting memories."
-                        }
-                      )
-                    ] }) : filteredUploads && filteredUploads.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "py-16 text-center", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        Search,
-                        {
-                          className: "w-10 h-10 mx-auto mb-3 opacity-30",
-                          style: { color: "oklch(var(--coral-primary))" }
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "p",
-                        {
-                          className: "text-sm font-medium",
-                          style: { color: "oklch(var(--muted-foreground))" },
-                          children: "No results found"
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "p",
-                        {
-                          className: "text-xs mt-1",
-                          style: { color: "oklch(0.65 0.04 55)" },
-                          children: "Try a different name or file name."
-                        }
-                      )
-                    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { className: "border-border/50", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-10 pl-5", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          Checkbox,
-                          {
-                            checked: allSelected,
-                            ref: (el) => {
-                              if (el)
-                                el.dataset.state = someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked";
-                            },
-                            onCheckedChange: toggleSelectAll,
-                            "aria-label": "Select all",
-                            className: "border-border/60"
-                          }
-                        ) }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider w-10",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "#"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider w-24",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "Preview"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "Uploader"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "File Name"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "Timestamp"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          TableHead,
-                          {
-                            className: "text-xs font-bold uppercase tracking-wider text-right",
-                            style: { color: "oklch(var(--hero-brown))" },
-                            children: "Actions"
-                          }
-                        )
-                      ] }) }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: (filteredUploads ?? []).map((entry, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        motion.tr,
-                        {
-                          initial: { opacity: 0, y: 8 },
-                          animate: { opacity: 1, y: 0 },
-                          transition: { delay: idx * 0.04, duration: 0.25 },
-                          className: "border-border/30 hover:bg-accent/30 transition-colors",
+                          className: "flex items-center gap-3 px-4 py-2 text-xs font-medium",
                           style: {
-                            backgroundColor: selectedIds.has(entry.blobId) ? "oklch(0.95 0.03 55 / 0.6)" : void 0
+                            color: GD.textSecondary,
+                            borderBottom: `1px solid ${GD.border}`,
+                            background: GD.bg
                           },
                           children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "pl-5", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 flex-shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              Checkbox,
+                              {
+                                checked: allSelected,
+                                ref: (el) => {
+                                  if (el)
+                                    el.dataset.state = someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked";
+                                },
+                                onCheckedChange: toggleSelectAll,
+                                "aria-label": "Select all",
+                                "data-ocid": "admin.select_all.checkbox"
+                              }
+                            ) }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-16 flex-shrink-0", children: "Preview" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 min-w-0", children: "File Name" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-32 flex-shrink-0 hidden sm:block", children: "Uploader" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-24 flex-shrink-0 hidden md:block", children: "Type" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-36 flex-shrink-0 hidden lg:block", children: "Date" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-28 flex-shrink-0 text-right", children: "Actions" })
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: (filteredUploads ?? []).map((entry, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        motion.div,
+                        {
+                          initial: { opacity: 0 },
+                          animate: { opacity: 1 },
+                          transition: { delay: idx * 0.03, duration: 0.2 },
+                          className: "flex items-center gap-3 px-4 py-2.5 transition-colors cursor-default group",
+                          style: {
+                            borderBottom: `1px solid ${GD.border}`,
+                            background: selectedIds.has(entry.blobId) ? GD.selectedRow : void 0
+                          },
+                          onMouseEnter: (e) => {
+                            if (!selectedIds.has(entry.blobId))
+                              e.currentTarget.style.background = GD.rowHover;
+                          },
+                          onMouseLeave: (e) => {
+                            if (!selectedIds.has(entry.blobId))
+                              e.currentTarget.style.background = "";
+                          },
+                          "data-ocid": `admin.uploads.item.${idx + 1}`,
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 flex-shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                               Checkbox,
                               {
                                 checked: selectedIds.has(entry.blobId),
                                 onCheckedChange: () => toggleSelect(entry.blobId),
                                 "aria-label": `Select ${entry.fileName}`,
-                                className: "border-border/60"
+                                "data-ocid": `admin.uploads.checkbox.${idx + 1}`
                               }
                             ) }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(
-                              TableCell,
-                              {
-                                className: "text-xs",
-                                style: {
-                                  color: "oklch(var(--muted-foreground))"
-                                },
-                                children: idx + 1
-                              }
-                            ),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-16 flex-shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                               MediaThumbnail,
                               {
                                 blobId: entry.blobId,
@@ -43255,120 +43415,114 @@ function AdminPage({ onNavigateHome }) {
                                 })
                               }
                             ) }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 min-w-0", children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                "p",
+                                {
+                                  className: "text-sm font-medium truncate",
+                                  style: { color: GD.textPrimary },
+                                  title: entry.fileName,
+                                  children: entry.fileName
+                                }
+                              ),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                "p",
+                                {
+                                  className: "text-xs truncate sm:hidden",
+                                  style: { color: GD.textSecondary },
+                                  children: entry.uploaderName
+                                }
+                              )
+                            ] }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-32 flex-shrink-0 hidden sm:flex items-center gap-2", children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(
                                 "div",
                                 {
-                                  className: "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0",
-                                  style: {
-                                    background: "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))"
-                                  },
+                                  className: "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0",
+                                  style: { background: GD.blue, fontSize: 10 },
                                   children: entry.uploaderName.charAt(0).toUpperCase()
                                 }
                               ),
                               /* @__PURE__ */ jsxRuntimeExports.jsx(
                                 "span",
                                 {
-                                  className: "text-sm font-medium",
-                                  style: { color: "oklch(var(--hero-brown))" },
+                                  className: "text-xs truncate",
+                                  style: { color: GD.textPrimary },
                                   children: entry.uploaderName
                                 }
                               )
-                            ] }) }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
-                              getFileTypeIcon(entry.fileName),
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                                "span",
-                                {
-                                  className: "text-sm max-w-[180px] truncate block",
-                                  style: { color: "oklch(var(--foreground))" },
-                                  title: entry.fileName,
-                                  children: entry.fileName
-                                }
-                              )
-                            ] }) }),
+                            ] }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-24 flex-shrink-0 hidden md:block", children: getFileTypeChip(entry.fileName) }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx(
-                              TableCell,
+                              "div",
                               {
-                                className: "text-xs whitespace-nowrap",
-                                style: {
-                                  color: "oklch(var(--muted-foreground))"
-                                },
+                                className: "w-36 flex-shrink-0 hidden lg:block text-xs",
+                                style: { color: GD.textSecondary },
                                 children: formatTimestamp(entry.timestamp)
                               }
                             ),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-1.5", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-28 flex-shrink-0 flex items-center justify-end gap-1", children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(
-                                Button,
+                                "button",
                                 {
-                                  size: "sm",
-                                  variant: "outline",
+                                  type: "button",
                                   onClick: () => handleViewFile(entry.blobId),
-                                  className: "h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50",
+                                  className: "w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200",
                                   title: "Open in new tab",
+                                  "data-ocid": `admin.uploads.view_button.${idx + 1}`,
                                   children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                                     Eye,
                                     {
-                                      className: "w-3.5 h-3.5",
-                                      style: {
-                                        color: "oklch(var(--coral-primary))"
-                                      }
+                                      className: "w-4 h-4",
+                                      style: { color: GD.textSecondary }
                                     }
                                   )
                                 }
                               ),
                               /* @__PURE__ */ jsxRuntimeExports.jsx(
-                                Button,
+                                "button",
                                 {
-                                  size: "sm",
-                                  variant: "outline",
+                                  type: "button",
                                   onClick: () => handleDownload(entry.blobId, entry.fileName),
                                   disabled: downloadingIds.has(entry.blobId),
-                                  className: "h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50",
+                                  className: "w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200 disabled:opacity-30",
                                   title: "Download",
+                                  "data-ocid": `admin.uploads.download_button.${idx + 1}`,
                                   children: downloadingIds.has(entry.blobId) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                                     LoaderCircle,
                                     {
-                                      className: "w-3.5 h-3.5 animate-spin",
-                                      style: {
-                                        color: "oklch(var(--muted-foreground))"
-                                      }
+                                      className: "w-4 h-4 animate-spin",
+                                      style: { color: GD.textSecondary }
                                     }
                                   ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
                                     Download,
                                     {
-                                      className: "w-3.5 h-3.5",
-                                      style: {
-                                        color: "oklch(var(--coral-primary))"
-                                      }
+                                      className: "w-4 h-4",
+                                      style: { color: GD.blue }
                                     }
                                   )
                                 }
                               ),
                               /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
                                 /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                                  Button,
+                                  "button",
                                   {
-                                    size: "sm",
-                                    variant: "outline",
+                                    type: "button",
                                     disabled: deletingIds.has(entry.blobId),
-                                    className: "h-8 w-8 p-0 rounded-lg border-border/60 hover:border-red-400/50",
+                                    className: "w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-red-50 disabled:opacity-30",
                                     title: "Delete",
+                                    "data-ocid": `admin.uploads.delete_button.${idx + 1}`,
                                     children: deletingIds.has(entry.blobId) ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                                       LoaderCircle,
                                       {
-                                        className: "w-3.5 h-3.5 animate-spin",
-                                        style: {
-                                          color: "oklch(var(--muted-foreground))"
-                                        }
+                                        className: "w-4 h-4 animate-spin",
+                                        style: { color: GD.textSecondary }
                                       }
                                     ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
                                       Trash2,
                                       {
-                                        className: "w-3.5 h-3.5",
-                                        style: {
-                                          color: "oklch(0.55 0.18 25)"
-                                        }
+                                        className: "w-4 h-4",
+                                        style: { color: GD.red }
                                       }
                                     )
                                   }
@@ -43379,56 +43533,69 @@ function AdminPage({ onNavigateHome }) {
                                     /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogDescription, { children: "This will permanently remove the file and cannot be undone." })
                                   ] }),
                                   /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
-                                    /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { children: "Cancel" }),
+                                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                      AlertDialogCancel,
+                                      {
+                                        "data-ocid": `admin.uploads.delete_cancel.${idx + 1}`,
+                                        children: "Cancel"
+                                      }
+                                    ),
                                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                                       AlertDialogAction,
                                       {
                                         onClick: () => handleDelete(entry.blobId),
                                         className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                                        "data-ocid": `admin.uploads.delete_confirm.${idx + 1}`,
                                         children: "Delete"
                                       }
                                     )
                                   ] })
                                 ] })
                               ] })
-                            ] }) })
+                            ] })
                           ]
                         },
                         entry.blobId
-                      )) }) })
-                    ] }) })
+                      )) })
+                    ] })
                   ]
                 }
               )
             ]
           }
         ) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "footer",
           {
-            className: "py-6 px-4 mt-8 border-t",
+            className: "py-4 px-6 text-center text-xs mt-auto",
             style: {
-              borderColor: "oklch(1 0 0 / 0.2)",
-              backgroundColor: "oklch(0.38 0.09 35 / 0.15)"
+              color: GD.textSecondary,
+              borderTop: `1px solid ${GD.border}`,
+              background: GD.white
             },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-6xl mx-auto text-center space-y-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs", style: { color: "oklch(0.45 0.06 40)" }, children: "Created by Dhruv Dhameliya" }),
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                "Created by",
+                " ",
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", style: { color: GD.textPrimary }, children: "Dhruv Dhameliya" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mx-2", children: "·" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "a",
                 {
                   href: `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`,
                   target: "_blank",
                   rel: "noopener noreferrer",
-                  className: "text-xs hover:underline",
-                  style: { color: "oklch(0.55 0.05 40)" },
+                  className: "hover:underline",
+                  style: { color: GD.blue },
                   children: [
                     "© ",
                     (/* @__PURE__ */ new Date()).getFullYear(),
-                    ". Built with love using caffeine.ai"
+                    ". Built with caffeine.ai"
                   ]
                 }
               )
-            ] })
+            ]
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx(

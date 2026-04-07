@@ -1,60 +1,37 @@
-# Kaushal Farewell – Admin Panel Google Drive Theme + File Type Filter
+# Kaushal Farewell
 
 ## Current State
-- Admin panel has a warm luxury/cinema aesthetic (brown/coral/warm tones, oklch color palette)
-- Search bar filters uploads by file name or uploader name
-- Table shows checkboxes, preview thumbnail, uploader, filename, timestamp, actions
-- No file type filter (images only / videos only) exists yet
-- Color scheme uses warm oklch browns, coral accents, warm gradients
+
+A privacy-focused photo/video upload app for Kaushal's farewell event. Users upload files with their name; only the admin can view/download/delete via a secured admin panel. The backend uses session token auth (survives canister restarts), brute-force protection, blob storage for files, and stores upload metadata (uploaderName, fileName, timestamp, blobId). The frontend has:
+- HomePage: luxury/cinema warm-toned upload form with drag-drop, multi-file, progress tracking
+- AdminPage: login form + uploads table with search, multi-select, delete selected, delete all, inline thumbnails, lightbox, download, auto-refresh every 2 seconds
+- Footer: "Created by Dhruv Dhameliya" on all pages
 
 ## Requested Changes (Diff)
 
 ### Add
-- File type filter buttons (All / Images / Videos) next to the search bar in the toolbar area
-- Filter logic: 'All' shows everything, 'Images' shows only image files, 'Videos' shows only video files
-- Filter combined with existing search query (both apply simultaneously)
-- Badge count updates to reflect currently active filter
-- Google Drive-style theme for the admin panel only (NOT the upload/home page):
-  - Clean white/light grey background instead of warm gradient
-  - Google Drive's blue accent color (#1a73e8) for primary actions and active states
-  - Clean sans-serif, minimal, spacious layout like Drive
-  - Header: white background with subtle bottom border
-  - Sidebar-style stats area or Drive-like top toolbar
-  - File rows with hover highlight in light blue/grey
-  - Action buttons styled like Drive's icon buttons
-  - Login card: clean white, Google-style form with blue button
+- File type filter in admin panel (All / Images only / Videos only) alongside the search bar
+- Google Drive-style theme for the admin panel (clean white/light gray, blue accents, Material-style sidebar/header, card-based layout)
+- Ensure upload button waits for actor to be ready before enabling (fix "Actor not available" error)
 
 ### Modify
-- filteredUploads logic: apply both searchQuery AND fileTypeFilter
-- Stats badge count: reflect filtered count
-- Overall admin page color scheme: switch from warm brown/coral to Google Drive blue/white/grey
-- Search bar area: add filter pill buttons (All / Images / Videos) inline
-- Table header colors: switch from warm brown to Drive's grey
-- Header: switch from warm brown to white/grey Drive style
-- Footer: keep "Created by Dhruv Dhameliya" but in Drive's lighter style
+- AdminPage: Replace current warm-brown coral theme with Google Drive-inspired clean, light theme (white background, #1a73e8 Google blue accents, gray sidebar/header, clean typography)
+- AdminPage: Add file type filter chips/tabs (All, Images, Videos) next to search bar
+- AdminPage: Remove 2-second auto-refresh or make it less aggressive (reduce to 10 seconds or manual only) — the auto-refresh is causing UI instability
+- HomePage: Ensure upload button shows "Connecting..." and is disabled until actor is ready, then enables instantly
 
 ### Remove
-- Warm gradient background from admin page
-- Coral/brown oklch color variables from admin panel (keep them on upload page)
+- QR code section (already removed in previous version)
+- Auto-refresh every 2 seconds (change to 15 seconds or remove entirely)
 
 ## Implementation Plan
-1. Add `fileTypeFilter` state ('all' | 'images' | 'videos') to AdminPage
-2. Update `filteredUploads` to apply both searchQuery and fileTypeFilter simultaneously
-3. Add filter pill buttons (All / Images / Videos) in the search bar area with image/video icons
-4. Retheme entire AdminPage to Google Drive style:
-   - Background: #f8f9fa (Drive's light grey)
-   - Header: white, border-bottom: 1px solid #e0e0e0
-   - Card/table container: white, rounded, subtle shadow
-   - Primary accent: #1a73e8 (Google blue)
-   - Text: #202124 (Google dark)
-   - Secondary text: #5f6368 (Google grey)
-   - Table row hover: #f1f3f4
-   - Selected row: #e8f0fe (Google blue tint)
-   - Action buttons: Drive-style icon buttons with grey hover
-   - Delete buttons: red #d93025
-   - Login form: white card, Google-style inputs, blue sign-in button
-   - Filter active pill: blue background, white text
-   - Filter inactive pill: grey border, dark text
-5. Keep all existing functionality intact (checkboxes, delete, download, lightbox, search, auto-refresh, session management)
-6. Keep footer 'Created by Dhruv Dhameliya'
-7. Do NOT change HomePage.tsx styling
+
+1. Backend: No changes needed — existing backend API is complete
+2. Frontend - HomePage:
+   - Ensure actor readiness check before enabling upload button
+3. Frontend - AdminPage:
+   - Apply Google Drive-style visual theme (light background, blue accents, clean sans-serif)
+   - Add file type filter state (all/images/videos) and filter chips UI
+   - Apply filter to uploads list alongside search
+   - Change auto-refresh interval from 2s to 15s (reduce flickering)
+4. Footer: Keep "Created by Dhruv Dhameliya" on both pages

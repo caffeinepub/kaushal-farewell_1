@@ -22,21 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ArrowLeft,
   Download,
   Eye,
   File,
   FileImage,
   FileVideo,
-  Heart,
   Loader2,
   LogOut,
   RefreshCw,
@@ -55,12 +46,32 @@ import type { UploadEntry } from "../backend";
 import { useActor } from "../hooks/useActor";
 import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const LS_TOKEN_KEY = "kf-admin-token";
-const AUTO_REFRESH_MS = 2000;
+const AUTO_REFRESH_MS = 15000;
 
+// ─── Google Drive colour palette (hex, not oklch) ────────────────────────────
+const GD = {
+  bg: "#f8f9fa",
+  white: "#ffffff",
+  blue: "#1a73e8",
+  blueHover: "#1557b0",
+  blueBg: "#e8f0fe",
+  textPrimary: "#202124",
+  textSecondary: "#5f6368",
+  border: "#dadce0",
+  red: "#d93025",
+  redBg: "#fce8e6",
+  greenBg: "#e6f4ea",
+  green: "#137333",
+  rowHover: "#f1f3f4",
+  selectedRow: "#e8f0fe",
+} as const;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function getFileExt(fileName: string): string {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
 }
@@ -71,16 +82,6 @@ function isImage(fileName: string): boolean {
 
 function isVideo(fileName: string): boolean {
   return VIDEO_EXTS.includes(getFileExt(fileName));
-}
-
-interface AdminPageProps {
-  onNavigateHome: () => void;
-}
-
-interface PreviewEntry {
-  blobId: string;
-  fileName: string;
-  uploaderName: string;
 }
 
 function formatTimestamp(ts: bigint): string {
@@ -95,30 +96,55 @@ function formatTimestamp(ts: bigint): string {
   });
 }
 
-function getFileTypeIcon(fileName: string) {
+function getFileTypeChip(fileName: string) {
   const ext = getFileExt(fileName);
-  if (IMAGE_EXTS.includes(ext))
+  if (IMAGE_EXTS.includes(ext)) {
     return (
-      <FileImage
-        className="w-4 h-4"
-        style={{ color: "oklch(var(--coral-primary))" }}
-      />
+      <span
+        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+        style={{ backgroundColor: GD.blueBg, color: GD.blue }}
+      >
+        <FileImage className="w-3 h-3" />
+        Image
+      </span>
     );
-  if (VIDEO_EXTS.includes(ext))
+  }
+  if (VIDEO_EXTS.includes(ext)) {
     return (
-      <FileVideo
-        className="w-4 h-4"
-        style={{ color: "oklch(var(--coral-primary))" }}
-      />
+      <span
+        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+        style={{ backgroundColor: GD.greenBg, color: GD.green }}
+      >
+        <FileVideo className="w-3 h-3" />
+        Video
+      </span>
     );
+  }
   return (
-    <File
-      className="w-4 h-4"
-      style={{ color: "oklch(var(--muted-foreground))" }}
-    />
+    <span
+      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+      style={{ backgroundColor: "#f1f3f4", color: GD.textSecondary }}
+    >
+      <File className="w-3 h-3" />
+      File
+    </span>
   );
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface AdminPageProps {
+  onNavigateHome: () => void;
+}
+
+interface PreviewEntry {
+  blobId: string;
+  fileName: string;
+  uploaderName: string;
+}
+
+type FileTypeFilter = "all" | "images" | "videos";
+
+// ─── MediaThumbnail ──────────────────────────────────────────────────────────
 function MediaThumbnail({
   blobId,
   fileName,
@@ -146,26 +172,34 @@ function MediaThumbnail({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring"
-        style={{ width: 64, height: 48 }}
+        className="relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none"
+        style={{
+          width: 56,
+          height: 40,
+          borderRadius: 4,
+          border: `1px solid ${GD.border}`,
+        }}
         aria-label="Preview image"
       >
         {(!loaded || !url) && (
-          <Skeleton className="absolute inset-0 rounded-lg" />
+          <Skeleton className="absolute inset-0" style={{ borderRadius: 4 }} />
         )}
         {url && (
           <img
             src={url}
             alt={fileName}
-            className="w-full h-full object-cover rounded-lg"
-            style={{ display: loaded ? "block" : "none" }}
+            className="w-full h-full object-cover"
+            style={{ display: loaded ? "block" : "none", borderRadius: 4 }}
             onLoad={() => setLoaded(true)}
             onError={() => setLoaded(true)}
           />
         )}
         {loaded && url && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors rounded-lg">
-            <Eye className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100" />
+          <div
+            className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+            style={{ background: "rgba(0,0,0,0.25)", borderRadius: 4 }}
+          >
+            <Eye className="w-3 h-3 text-white" />
           </div>
         )}
       </button>
@@ -177,8 +211,14 @@ function MediaThumbnail({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex-shrink-0 overflow-hidden rounded-lg border border-border/40 cursor-pointer hover:opacity-90 transition-opacity bg-black focus:outline-none focus:ring-2 focus:ring-ring"
-        style={{ width: 80, height: 48 }}
+        className="relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none"
+        style={{
+          width: 64,
+          height: 40,
+          borderRadius: 4,
+          border: `1px solid ${GD.border}`,
+          background: "#000",
+        }}
         aria-label="Preview video"
       >
         {url ? (
@@ -186,20 +226,25 @@ function MediaThumbnail({
             src={url}
             muted
             preload="metadata"
-            className="w-full h-full object-cover rounded-lg"
-            style={{ pointerEvents: "none" }}
+            className="w-full h-full object-cover"
+            style={{ pointerEvents: "none", borderRadius: 4 }}
           >
             <track kind="captions" />
           </video>
         ) : (
-          <Skeleton className="absolute inset-0 rounded-lg" />
+          <Skeleton className="absolute inset-0" style={{ borderRadius: 4 }} />
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.35)", borderRadius: 4 }}
+        >
           <div
-            className="w-6 h-6 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "oklch(0.63 0.14 29 / 0.9)" }}
+            className="w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(255,255,255,0.9)" }}
           >
-            <span className="text-white text-xs ml-0.5">▶</span>
+            <span style={{ color: "#202124", fontSize: 8, marginLeft: 1 }}>
+              ▶
+            </span>
           </div>
         </div>
       </button>
@@ -208,14 +253,21 @@ function MediaThumbnail({
 
   return (
     <div
-      className="flex-shrink-0 rounded-lg border border-border/40 flex items-center justify-center"
-      style={{ width: 48, height: 48, backgroundColor: "oklch(0.96 0.015 55)" }}
+      className="flex-shrink-0 flex items-center justify-center"
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 4,
+        border: `1px solid ${GD.border}`,
+        background: GD.bg,
+      }}
     >
-      {getFileTypeIcon(fileName)}
+      <File className="w-4 h-4" style={{ color: GD.textSecondary }} />
     </div>
   );
 }
 
+// ─── MediaPreviewModal ────────────────────────────────────────────────────────
 function MediaPreviewModal({
   entry,
   onClose,
@@ -244,61 +296,59 @@ function MediaPreviewModal({
   return (
     <Dialog open={!!entry} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-w-3xl w-full p-0 overflow-hidden rounded-2xl"
-        style={{ backgroundColor: "oklch(0.14 0.02 30)" }}
+        className="max-w-3xl w-full p-0 overflow-hidden"
+        style={{ borderRadius: 8, border: `1px solid ${GD.border}` }}
       >
         <DialogHeader
-          className="px-5 pt-4 pb-3 border-b"
-          style={{ borderColor: "oklch(1 0 0 / 0.1)" }}
+          className="px-5 pt-4 pb-3"
+          style={{ borderBottom: `1px solid ${GD.border}` }}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <DialogTitle
-                className="text-base font-semibold leading-tight"
-                style={{ color: "oklch(0.95 0.02 55)" }}
+                className="text-base font-medium leading-tight"
+                style={{
+                  color: GD.textPrimary,
+                  fontFamily: "system-ui, sans-serif",
+                }}
               >
                 {entry.fileName}
               </DialogTitle>
-              <p
-                className="text-xs mt-0.5"
-                style={{ color: "oklch(0.65 0.04 40)" }}
-              >
+              <p className="text-xs mt-0.5" style={{ color: GD.textSecondary }}>
                 Uploaded by{" "}
-                <span style={{ color: "oklch(0.78 0.1 30)" }}>
-                  {entry.uploaderName}
-                </span>
+                <span style={{ color: GD.blue }}>{entry.uploaderName}</span>
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-              style={{ backgroundColor: "oklch(1 0 0 / 0.1)" }}
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100"
+              aria-label="Close preview"
             >
-              <X className="w-4 h-4" style={{ color: "oklch(0.85 0.02 55)" }} />
+              <X className="w-4 h-4" style={{ color: GD.textSecondary }} />
             </button>
           </div>
         </DialogHeader>
         <div
           className="flex items-center justify-center p-4"
-          style={{ minHeight: 320, backgroundColor: "oklch(0.1 0.01 30)" }}
+          style={{ minHeight: 320, background: "#f1f3f4" }}
         >
           {!url ? (
-            <Skeleton className="w-full h-64 rounded-lg" />
+            <Skeleton className="w-full h-64 rounded" />
           ) : isImage(entry.fileName) ? (
             <img
               src={url}
               alt={entry.fileName}
-              className="max-w-full max-h-[65vh] object-contain rounded-lg"
-              style={{ boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" }}
+              className="max-w-full max-h-[65vh] object-contain rounded"
+              style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}
             />
           ) : isVideo(entry.fileName) ? (
             <video
               src={url}
               controls
               autoPlay
-              className="max-w-full max-h-[65vh] rounded-lg"
-              style={{ boxShadow: "0 8px 40px oklch(0 0 0 / 0.5)" }}
+              className="max-w-full max-h-[65vh] rounded"
+              style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}
             >
               <track kind="captions" />
             </video>
@@ -306,9 +356,9 @@ function MediaPreviewModal({
             <div className="text-center py-12">
               <File
                 className="w-12 h-12 mx-auto mb-3"
-                style={{ color: "oklch(0.65 0.04 40)" }}
+                style={{ color: GD.textSecondary }}
               />
-              <p className="text-sm" style={{ color: "oklch(0.65 0.04 40)" }}>
+              <p className="text-sm" style={{ color: GD.textSecondary }}>
                 Preview not available.
               </p>
             </div>
@@ -319,6 +369,38 @@ function MediaPreviewModal({
   );
 }
 
+// ─── Filter Chip ──────────────────────────────────────────────────────────────
+function FilterChip({
+  label,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all"
+      style={{
+        borderRadius: 20,
+        border: active ? `1px solid ${GD.blue}` : `1px solid ${GD.border}`,
+        background: active ? GD.blueBg : GD.white,
+        color: active ? GD.blue : GD.textSecondary,
+        cursor: "pointer",
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -335,11 +417,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Selection state
+  const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Local data state
   const [uploads, setUploads] = useState<UploadEntry[] | null>(null);
   const [stats, setStats] = useState<[bigint, bigint] | null>(null);
   const [uploadsLoading, setUploadsLoading] = useState(false);
@@ -360,14 +439,19 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     selectedIds.size === uploads.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
 
+  // Filter uploads by search + file type
   const filteredUploads = uploads
     ? uploads.filter((u) => {
         const q = searchQuery.toLowerCase().trim();
-        if (!q) return true;
-        return (
+        const matchesSearch =
+          !q ||
           u.fileName.toLowerCase().includes(q) ||
-          u.uploaderName.toLowerCase().includes(q)
-        );
+          u.uploaderName.toLowerCase().includes(q);
+        const matchesType =
+          fileTypeFilter === "all" ||
+          (fileTypeFilter === "images" && isImage(u.fileName)) ||
+          (fileTypeFilter === "videos" && isVideo(u.fileName));
+        return matchesSearch && matchesType;
       })
     : null;
 
@@ -427,7 +511,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     }
   }, [isLoggedIn, actor, sessionToken, fetchAdminData]);
 
-  // Auto-refresh every 2 seconds
+  // Auto-refresh every 15 seconds
   useEffect(() => {
     if (!isLoggedIn || !sessionToken || !actor) {
       if (autoRefreshRef.current) {
@@ -667,98 +751,91 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   void lockoutSecondsLeft;
 
-  return (
-    <div
-      className="min-h-screen"
-      style={{
-        background:
-          "linear-gradient(160deg, oklch(0.93 0.04 55) 0%, oklch(0.88 0.07 35) 50%, oklch(0.82 0.1 25) 100%)",
-      }}
-    >
-      {/* Header */}
-      <header
-        className="sticky top-0 z-50 shadow-header"
-        style={{ backgroundColor: "oklch(var(--header-bg))" }}
+  // ─── Login Page ───────────────────────────────────────────────────────────
+  if (!isLoggedIn) {
+    return (
+      <div
+        className="min-h-screen flex flex-col"
+        style={{
+          background: GD.bg,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={onNavigateHome}
-                className="flex items-center gap-2 text-sm font-medium transition-colors"
-                style={{ color: "oklch(0.55 0.06 40)" }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </button>
-              <div className="w-px h-4 bg-border" />
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
-                  }}
-                >
-                  <Shield className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span
-                  className="font-display font-bold text-base"
-                  style={{ color: "oklch(var(--hero-brown))" }}
-                >
-                  Admin Panel
-                </span>
-              </div>
-            </div>
-            {isLoggedIn && (
-              <Button
-                onClick={handleSignOut}
-                className="rounded-full font-semibold px-6 text-white"
-                style={{ background: "oklch(0.55 0.06 40)" }}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {!isLoggedIn ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-16"
+        {/* Top bar */}
+        <header
+          className="flex items-center px-6 py-3 shadow-sm"
+          style={{
+            background: GD.white,
+            borderBottom: `1px solid ${GD.border}`,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-blue-600"
+            style={{ color: GD.textSecondary }}
+            data-ocid="admin.back.link"
           >
-            <div
-              className="w-full max-w-sm rounded-2xl shadow-card p-8"
-              style={{ backgroundColor: "oklch(1 0 0)" }}
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </button>
+          <div className="mx-4 w-px h-4" style={{ background: GD.border }} />
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5" style={{ color: GD.blue }} />
+            <span
+              className="font-medium text-sm"
+              style={{ color: GD.textPrimary }}
             >
-              <div className="flex justify-center mb-6">
+              Kaushal Farewell Admin
+            </span>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-sm"
+          >
+            {/* Google-style sign-in card */}
+            <div
+              className="p-8"
+              style={{
+                background: GD.white,
+                border: `1px solid ${GD.border}`,
+                borderRadius: 8,
+                boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              }}
+            >
+              {/* Logo area */}
+              <div className="text-center mb-6">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: GD.blueBg }}
+                >
+                  <Shield className="w-6 h-6" style={{ color: GD.blue }} />
+                </div>
+                <h2
+                  className="text-2xl font-normal mb-1"
                   style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
+                    color: GD.textPrimary,
+                    fontFamily: "system-ui, sans-serif",
                   }}
                 >
-                  <Shield className="w-7 h-7 text-white" />
-                </div>
+                  Sign in
+                </h2>
+                <p className="text-sm" style={{ color: GD.textSecondary }}>
+                  to Admin Panel
+                </p>
               </div>
-              <h2
-                className="font-display font-bold text-2xl text-center mb-6"
-                style={{ color: "oklch(var(--hero-brown))" }}
-              >
-                Admin Login
-              </h2>
+
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label
                     htmlFor="admin-email"
                     className="text-sm font-medium"
-                    style={{ color: "oklch(var(--hero-brown))" }}
+                    style={{ color: GD.textPrimary }}
                   >
                     Email
                   </Label>
@@ -769,14 +846,20 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     disabled={!!lockoutUntil}
-                    className="rounded-xl border-border/60 focus:border-coral/60"
+                    className="h-10 text-sm"
+                    style={{
+                      borderColor: GD.border,
+                      borderRadius: 4,
+                      color: GD.textPrimary,
+                    }}
+                    data-ocid="admin.email.input"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label
                     htmlFor="admin-password"
                     className="text-sm font-medium"
-                    style={{ color: "oklch(var(--hero-brown))" }}
+                    style={{ color: GD.textPrimary }}
                   >
                     Password
                   </Label>
@@ -788,622 +871,785 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     placeholder="••••••••"
                     required
                     disabled={!!lockoutUntil}
-                    className="rounded-xl border-border/60 focus:border-coral/60"
+                    className="h-10 text-sm"
+                    style={{
+                      borderColor: GD.border,
+                      borderRadius: 4,
+                      color: GD.textPrimary,
+                    }}
+                    data-ocid="admin.password.input"
                   />
                 </div>
+
                 {loginError && (
-                  <p
-                    className="text-sm text-center"
-                    style={{ color: "oklch(0.5 0.18 25)" }}
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 rounded text-sm"
+                    style={{
+                      background: GD.redBg,
+                      color: GD.red,
+                      border: "1px solid #f5c6c4",
+                      borderRadius: 4,
+                    }}
+                    data-ocid="admin.login.error_state"
                   >
+                    <XCircle className="w-4 h-4 flex-shrink-0" />
                     {loginError}
-                  </p>
+                  </div>
                 )}
-                <Button
-                  type="submit"
-                  disabled={!!lockoutUntil || isLoginLoading}
-                  className="w-full rounded-xl font-semibold text-white mt-2"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
-                  }}
-                >
-                  {isLoginLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
+
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="submit"
+                    disabled={!!lockoutUntil || isLoginLoading}
+                    className="px-8 h-9 text-sm font-medium text-white"
+                    style={{
+                      background:
+                        isLoginLoading || lockoutUntil ? "#ccc" : GD.blue,
+                      borderRadius: 4,
+                      border: "none",
+                    }}
+                    data-ocid="admin.login.submit_button"
+                  >
+                    {isLoginLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Signing in…
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </div>
               </form>
             </div>
           </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                className="rounded-2xl p-5 shadow-card"
-                style={{ backgroundColor: "oklch(1 0 0)" }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: "oklch(0.93 0.04 55)" }}
-                  >
-                    <Upload
-                      className="w-5 h-5"
-                      style={{ color: "oklch(var(--coral-primary))" }}
-                    />
-                  </div>
-                  <div>
-                    <p
-                      className="text-2xl font-display font-bold"
-                      style={{ color: "oklch(var(--hero-brown))" }}
-                    >
-                      {totalUploads}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: "oklch(var(--muted-foreground))" }}
-                    >
-                      Total Uploads
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="rounded-2xl p-5 shadow-card"
-                style={{ backgroundColor: "oklch(1 0 0)" }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: "oklch(0.93 0.04 55)" }}
-                  >
-                    <Users
-                      className="w-5 h-5"
-                      style={{ color: "oklch(var(--coral-primary))" }}
-                    />
-                  </div>
-                  <div>
-                    <p
-                      className="text-2xl font-display font-bold"
-                      style={{ color: "oklch(var(--hero-brown))" }}
-                    >
-                      {uniqueUploaders}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: "oklch(var(--muted-foreground))" }}
-                    >
-                      Contributors
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        </main>
 
-            {/* Uploads table */}
-            <div
-              className="rounded-2xl shadow-card overflow-hidden"
-              style={{ backgroundColor: "oklch(1 0 0)" }}
-            >
-              {/* Table header bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <Heart
-                    className="w-4 h-4"
-                    style={{ color: "oklch(var(--coral-primary))" }}
-                  />
-                  <h3
-                    className="font-display font-bold text-base"
-                    style={{ color: "oklch(var(--hero-brown))" }}
-                  >
-                    All Uploaded Memories
-                  </h3>
-                  {uploads && (
-                    <Badge variant="secondary" className="text-xs">
-                      {searchQuery
-                        ? `${filteredUploads?.length ?? 0} / ${uploads.length}`
-                        : uploads.length}
-                    </Badge>
-                  )}
-                  {selectedIds.size > 0 && (
-                    <Badge
-                      className="text-xs text-white"
-                      style={{ backgroundColor: "oklch(0.63 0.14 29)" }}
-                    >
-                      {selectedIds.size} selected
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {autoRefreshActive && (
-                    <span
-                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: "oklch(0.93 0.06 142 / 0.15)",
-                        color: "oklch(0.45 0.12 142)",
-                      }}
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ backgroundColor: "oklch(0.55 0.15 142)" }}
-                      />
-                      Live
-                    </span>
-                  )}
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => sessionToken && fetchAdminData(sessionToken)}
-                    className="gap-1.5 text-xs"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Refresh
-                  </Button>
-
-                  {/* Delete Selected */}
-                  {selectedIds.size > 0 && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          disabled={isDeletingSelected}
-                          className="gap-1.5 text-xs text-white rounded-lg"
-                          style={{ background: "oklch(0.55 0.18 25)" }}
-                        >
-                          {isDeletingSelected ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                          Delete Selected ({selectedIds.size})
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete {selectedIds.size} selected file(s)?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove the selected{" "}
-                            {selectedIds.size} file(s) and cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteSelected}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete {selectedIds.size} File(s)
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-
-                  {/* Delete All */}
-                  {uploads && uploads.length > 0 && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={isDeletingAll}
-                          className="gap-1.5 text-xs rounded-lg border-red-300/60 hover:border-red-400/60"
-                          style={{ color: "oklch(0.5 0.18 25)" }}
-                        >
-                          {isDeletingAll ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                          Delete All
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete ALL uploads?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove all {uploads.length}{" "}
-                            uploaded files and cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteAll}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete All {uploads.length} Files
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-              </div>
-              {/* Search bar */}
-              <div className="px-5 py-3 border-b border-border/30">
-                <div className="relative w-full max-w-sm">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-                    style={{ color: "oklch(0.65 0.04 55)" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search by name or uploader..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-8 py-1.5 text-sm rounded-lg border border-border/50 bg-transparent outline-none focus:ring-1 focus:ring-border"
-                    style={{ color: "oklch(var(--hero-brown))" }}
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
-                      aria-label="Clear search"
-                    >
-                      <XCircle
-                        className="w-3.5 h-3.5"
-                        style={{ color: "oklch(0.65 0.04 55)" }}
-                      />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {uploadsLoading ? (
-                <div className="p-5 space-y-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <Skeleton className="h-4 w-4 rounded" />
-                      <Skeleton className="h-12 w-16 rounded-lg" />
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="h-4 w-36" />
-                      <Skeleton className="h-8 w-20" />
-                    </div>
-                  ))}
-                </div>
-              ) : !uploads || uploads.length === 0 ? (
-                <div className="py-16 text-center">
-                  <Heart
-                    className="w-10 h-10 mx-auto mb-3 opacity-30"
-                    style={{ color: "oklch(var(--coral-primary))" }}
-                  />
-                  <p
-                    className="text-sm font-medium"
-                    style={{ color: "oklch(var(--muted-foreground))" }}
-                  >
-                    No uploads yet
-                  </p>
-                  <p
-                    className="text-xs mt-1"
-                    style={{ color: "oklch(0.65 0.04 55)" }}
-                  >
-                    Share the upload link with guests to start collecting
-                    memories.
-                  </p>
-                </div>
-              ) : filteredUploads && filteredUploads.length === 0 ? (
-                <div className="py-16 text-center">
-                  <Search
-                    className="w-10 h-10 mx-auto mb-3 opacity-30"
-                    style={{ color: "oklch(var(--coral-primary))" }}
-                  />
-                  <p
-                    className="text-sm font-medium"
-                    style={{ color: "oklch(var(--muted-foreground))" }}
-                  >
-                    No results found
-                  </p>
-                  <p
-                    className="text-xs mt-1"
-                    style={{ color: "oklch(0.65 0.04 55)" }}
-                  >
-                    Try a different name or file name.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border/50">
-                        <TableHead className="w-10 pl-5">
-                          <Checkbox
-                            checked={allSelected}
-                            ref={(el) => {
-                              if (el)
-                                (el as HTMLButtonElement).dataset.state =
-                                  someSelected
-                                    ? "indeterminate"
-                                    : allSelected
-                                      ? "checked"
-                                      : "unchecked";
-                            }}
-                            onCheckedChange={toggleSelectAll}
-                            aria-label="Select all"
-                            className="border-border/60"
-                          />
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider w-10"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          #
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider w-24"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          Preview
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          Uploader
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          File Name
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          Timestamp
-                        </TableHead>
-                        <TableHead
-                          className="text-xs font-bold uppercase tracking-wider text-right"
-                          style={{ color: "oklch(var(--hero-brown))" }}
-                        >
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <AnimatePresence>
-                        {(filteredUploads ?? []).map((entry, idx) => (
-                          <motion.tr
-                            key={entry.blobId}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.04, duration: 0.25 }}
-                            className="border-border/30 hover:bg-accent/30 transition-colors"
-                            style={{
-                              backgroundColor: selectedIds.has(entry.blobId)
-                                ? "oklch(0.95 0.03 55 / 0.6)"
-                                : undefined,
-                            }}
-                          >
-                            <TableCell className="pl-5">
-                              <Checkbox
-                                checked={selectedIds.has(entry.blobId)}
-                                onCheckedChange={() =>
-                                  toggleSelect(entry.blobId)
-                                }
-                                aria-label={`Select ${entry.fileName}`}
-                                className="border-border/60"
-                              />
-                            </TableCell>
-
-                            <TableCell
-                              className="text-xs"
-                              style={{
-                                color: "oklch(var(--muted-foreground))",
-                              }}
-                            >
-                              {idx + 1}
-                            </TableCell>
-
-                            <TableCell>
-                              <MediaThumbnail
-                                blobId={entry.blobId}
-                                fileName={entry.fileName}
-                                onClick={() =>
-                                  setPreviewEntry({
-                                    blobId: entry.blobId,
-                                    fileName: entry.fileName,
-                                    uploaderName: entry.uploaderName,
-                                  })
-                                }
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 28))",
-                                  }}
-                                >
-                                  {entry.uploaderName.charAt(0).toUpperCase()}
-                                </div>
-                                <span
-                                  className="text-sm font-medium"
-                                  style={{ color: "oklch(var(--hero-brown))" }}
-                                >
-                                  {entry.uploaderName}
-                                </span>
-                              </div>
-                            </TableCell>
-
-                            <TableCell>
-                              <div className="flex items-center gap-1.5">
-                                {getFileTypeIcon(entry.fileName)}
-                                <span
-                                  className="text-sm max-w-[180px] truncate block"
-                                  style={{ color: "oklch(var(--foreground))" }}
-                                  title={entry.fileName}
-                                >
-                                  {entry.fileName}
-                                </span>
-                              </div>
-                            </TableCell>
-
-                            <TableCell
-                              className="text-xs whitespace-nowrap"
-                              style={{
-                                color: "oklch(var(--muted-foreground))",
-                              }}
-                            >
-                              {formatTimestamp(entry.timestamp)}
-                            </TableCell>
-
-                            <TableCell>
-                              <div className="flex items-center justify-end gap-1.5">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleViewFile(entry.blobId)}
-                                  className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
-                                  title="Open in new tab"
-                                >
-                                  <Eye
-                                    className="w-3.5 h-3.5"
-                                    style={{
-                                      color: "oklch(var(--coral-primary))",
-                                    }}
-                                  />
-                                </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleDownload(entry.blobId, entry.fileName)
-                                  }
-                                  disabled={downloadingIds.has(entry.blobId)}
-                                  className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-primary/50"
-                                  title="Download"
-                                >
-                                  {downloadingIds.has(entry.blobId) ? (
-                                    <Loader2
-                                      className="w-3.5 h-3.5 animate-spin"
-                                      style={{
-                                        color: "oklch(var(--muted-foreground))",
-                                      }}
-                                    />
-                                  ) : (
-                                    <Download
-                                      className="w-3.5 h-3.5"
-                                      style={{
-                                        color: "oklch(var(--coral-primary))",
-                                      }}
-                                    />
-                                  )}
-                                </Button>
-
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={deletingIds.has(entry.blobId)}
-                                      className="h-8 w-8 p-0 rounded-lg border-border/60 hover:border-red-400/50"
-                                      title="Delete"
-                                    >
-                                      {deletingIds.has(entry.blobId) ? (
-                                        <Loader2
-                                          className="w-3.5 h-3.5 animate-spin"
-                                          style={{
-                                            color:
-                                              "oklch(var(--muted-foreground))",
-                                          }}
-                                        />
-                                      ) : (
-                                        <Trash2
-                                          className="w-3.5 h-3.5"
-                                          style={{
-                                            color: "oklch(0.55 0.18 25)",
-                                          }}
-                                        />
-                                      )}
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Delete this upload?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will permanently remove the file
-                                        and cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancel
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() =>
-                                          handleDelete(entry.blobId)
-                                        }
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </motion.tr>
-                        ))}
-                      </AnimatePresence>
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer
-        className="py-6 px-4 mt-8 border-t"
-        style={{
-          borderColor: "oklch(1 0 0 / 0.2)",
-          backgroundColor: "oklch(0.38 0.09 35 / 0.15)",
-        }}
-      >
-        <div className="max-w-6xl mx-auto text-center space-y-1">
-          <p className="text-xs" style={{ color: "oklch(0.45 0.06 40)" }}>
-            Created by Dhruv Dhameliya
-          </p>
+        {/* Footer */}
+        <footer
+          className="py-4 px-6 text-center text-xs"
+          style={{
+            color: GD.textSecondary,
+            borderTop: `1px solid ${GD.border}`,
+          }}
+        >
+          <span>
+            Created by{" "}
+            <span className="font-semibold" style={{ color: GD.textPrimary }}>
+              Dhruv Dhameliya
+            </span>
+          </span>
+          <span className="mx-2">·</span>
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs hover:underline"
-            style={{ color: "oklch(0.55 0.05 40)" }}
+            className="hover:underline"
+            style={{ color: GD.blue }}
           >
-            © {new Date().getFullYear()}. Built with love using caffeine.ai
+            © {new Date().getFullYear()}. Built with caffeine.ai
           </a>
+        </footer>
+      </div>
+    );
+  }
+
+  // ─── Admin Dashboard ──────────────────────────────────────────────────────
+  const imageCount = uploads
+    ? uploads.filter((u) => isImage(u.fileName)).length
+    : 0;
+  const videoCount = uploads
+    ? uploads.filter((u) => isVideo(u.fileName)).length
+    : 0;
+
+  return (
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        background: GD.bg,
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      {/* Top App Bar — Google Drive style */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 h-14"
+        style={{
+          background: GD.white,
+          borderBottom: `1px solid ${GD.border}`,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100"
+            style={{ color: GD.textSecondary }}
+            data-ocid="admin.back.link"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Home
+          </button>
+          <div className="w-px h-5" style={{ background: GD.border }} />
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5" style={{ color: GD.blue }} />
+            <span
+              className="font-medium text-base"
+              style={{ color: GD.textPrimary }}
+            >
+              Admin Panel
+            </span>
+          </div>
         </div>
+
+        <div className="flex items-center gap-3">
+          {autoRefreshActive && (
+            <span
+              className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+              style={{
+                background: GD.greenBg,
+                color: GD.green,
+                border: "1px solid #ceead6",
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ background: GD.green }}
+              />
+              Auto-refresh on
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100"
+            style={{ color: GD.textSecondary }}
+            data-ocid="admin.signout.button"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-5"
+        >
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                icon: <Upload className="w-5 h-5" style={{ color: GD.blue }} />,
+                value: totalUploads,
+                label: "Total Files",
+                bg: GD.blueBg,
+                ocid: "admin.total.card",
+              },
+              {
+                icon: (
+                  <Users className="w-5 h-5" style={{ color: "#7b1fa2" }} />
+                ),
+                value: uniqueUploaders,
+                label: "Contributors",
+                bg: "#f3e5f5",
+                ocid: "admin.contributors.card",
+              },
+              {
+                icon: (
+                  <FileImage className="w-5 h-5" style={{ color: GD.blue }} />
+                ),
+                value: imageCount,
+                label: "Images",
+                bg: GD.blueBg,
+                ocid: "admin.images.card",
+              },
+              {
+                icon: (
+                  <FileVideo className="w-5 h-5" style={{ color: GD.green }} />
+                ),
+                value: videoCount,
+                label: "Videos",
+                bg: GD.greenBg,
+                ocid: "admin.videos.card",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="p-4 flex items-center gap-3"
+                style={{
+                  background: GD.white,
+                  border: `1px solid ${GD.border}`,
+                  borderRadius: 8,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+                data-ocid={stat.ocid}
+              >
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: stat.bg }}
+                >
+                  {stat.icon}
+                </div>
+                <div>
+                  <p
+                    className="text-xl font-semibold"
+                    style={{ color: GD.textPrimary }}
+                  >
+                    {stat.value}
+                  </p>
+                  <p className="text-xs" style={{ color: GD.textSecondary }}>
+                    {stat.label}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Files Panel */}
+          <div
+            style={{
+              background: GD.white,
+              border: `1px solid ${GD.border}`,
+              borderRadius: 8,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Toolbar row 1 — title + bulk actions */}
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+              style={{ borderBottom: `1px solid ${GD.border}` }}
+            >
+              <div className="flex items-center gap-2">
+                <h3
+                  className="font-medium text-base"
+                  style={{ color: GD.textPrimary }}
+                >
+                  All Uploads
+                </h3>
+                {uploads && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs"
+                    style={{
+                      background: GD.bg,
+                      color: GD.textSecondary,
+                      border: `1px solid ${GD.border}`,
+                    }}
+                  >
+                    {searchQuery || fileTypeFilter !== "all"
+                      ? `${filteredUploads?.length ?? 0} / ${uploads.length}`
+                      : uploads.length}
+                  </Badge>
+                )}
+                {selectedIds.size > 0 && (
+                  <Badge
+                    className="text-xs text-white"
+                    style={{ background: GD.blue }}
+                  >
+                    {selectedIds.size} selected
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => sessionToken && fetchAdminData(sessionToken)}
+                  className="gap-1.5 text-xs h-8"
+                  style={{ color: GD.textSecondary, borderRadius: 4 }}
+                  data-ocid="admin.refresh.button"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Refresh
+                </Button>
+
+                {/* Delete Selected */}
+                {selectedIds.size > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        disabled={isDeletingSelected}
+                        className="gap-1.5 text-xs h-8 text-white"
+                        style={{
+                          background: GD.red,
+                          borderRadius: 4,
+                          border: "none",
+                        }}
+                        data-ocid="admin.delete_selected.button"
+                      >
+                        {isDeletingSelected ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        Delete Selected ({selectedIds.size})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Delete {selectedIds.size} selected file(s)?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove the selected{" "}
+                          {selectedIds.size} file(s) and cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel data-ocid="admin.delete_selected.cancel_button">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteSelected}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          data-ocid="admin.delete_selected.confirm_button"
+                        >
+                          Delete {selectedIds.size} File(s)
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
+                {/* Delete All */}
+                {uploads && uploads.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isDeletingAll}
+                        className="gap-1.5 text-xs h-8"
+                        style={{
+                          color: GD.red,
+                          borderColor: "#f5c6c4",
+                          borderRadius: 4,
+                        }}
+                        data-ocid="admin.delete_all.button"
+                      >
+                        {isDeletingAll ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        Delete All
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete ALL uploads?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove all {uploads.length}{" "}
+                          uploaded files and cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel data-ocid="admin.delete_all.cancel_button">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAll}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          data-ocid="admin.delete_all.confirm_button"
+                        >
+                          Delete All {uploads.length} Files
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            </div>
+
+            {/* Toolbar row 2 — search + filter chips */}
+            <div
+              className="flex flex-wrap items-center gap-3 px-5 py-3"
+              style={{
+                borderBottom: `1px solid ${GD.border}`,
+                background: GD.bg,
+              }}
+            >
+              {/* Search */}
+              <div className="relative flex-1 min-w-48 max-w-xs">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+                  style={{ color: GD.textSecondary }}
+                />
+                <input
+                  type="text"
+                  placeholder="Search files or uploaders…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-1.5 text-sm outline-none"
+                  style={{
+                    borderRadius: 20,
+                    border: `1px solid ${GD.border}`,
+                    background: GD.white,
+                    color: GD.textPrimary,
+                  }}
+                  data-ocid="admin.search.input"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                    aria-label="Clear search"
+                  >
+                    <XCircle
+                      className="w-3.5 h-3.5"
+                      style={{ color: GD.textSecondary }}
+                    />
+                  </button>
+                )}
+              </div>
+
+              {/* File type filter chips */}
+              <div className="flex items-center gap-2">
+                <FilterChip
+                  label="All"
+                  active={fileTypeFilter === "all"}
+                  onClick={() => setFileTypeFilter("all")}
+                  icon={<File className="w-3.5 h-3.5" />}
+                />
+                <FilterChip
+                  label="Images"
+                  active={fileTypeFilter === "images"}
+                  onClick={() => setFileTypeFilter("images")}
+                  icon={<FileImage className="w-3.5 h-3.5" />}
+                />
+                <FilterChip
+                  label="Videos"
+                  active={fileTypeFilter === "videos"}
+                  onClick={() => setFileTypeFilter("videos")}
+                  icon={<FileVideo className="w-3.5 h-3.5" />}
+                />
+              </div>
+            </div>
+
+            {/* Files list / table */}
+            {uploadsLoading ? (
+              <div className="p-5 space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-10 w-14 rounded" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : !uploads || uploads.length === 0 ? (
+              <div
+                className="py-16 text-center"
+                data-ocid="admin.uploads.empty_state"
+              >
+                <Upload
+                  className="w-10 h-10 mx-auto mb-3"
+                  style={{ color: GD.border }}
+                />
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: GD.textPrimary }}
+                >
+                  No uploads yet
+                </p>
+                <p className="text-xs mt-1" style={{ color: GD.textSecondary }}>
+                  Share the upload link with guests to start collecting
+                  memories.
+                </p>
+              </div>
+            ) : filteredUploads && filteredUploads.length === 0 ? (
+              <div
+                className="py-16 text-center"
+                data-ocid="admin.search.empty_state"
+              >
+                <Search
+                  className="w-10 h-10 mx-auto mb-3"
+                  style={{ color: GD.border }}
+                />
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: GD.textPrimary }}
+                >
+                  No results found
+                </p>
+                <p className="text-xs mt-1" style={{ color: GD.textSecondary }}>
+                  Try a different search term or filter.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                {/* Table header */}
+                <div
+                  className="flex items-center gap-3 px-4 py-2 text-xs font-medium"
+                  style={{
+                    color: GD.textSecondary,
+                    borderBottom: `1px solid ${GD.border}`,
+                    background: GD.bg,
+                  }}
+                >
+                  <div className="w-8 flex-shrink-0">
+                    <Checkbox
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el)
+                          (el as HTMLButtonElement).dataset.state = someSelected
+                            ? "indeterminate"
+                            : allSelected
+                              ? "checked"
+                              : "unchecked";
+                      }}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                      data-ocid="admin.select_all.checkbox"
+                    />
+                  </div>
+                  <div className="w-16 flex-shrink-0">Preview</div>
+                  <div className="flex-1 min-w-0">File Name</div>
+                  <div className="w-32 flex-shrink-0 hidden sm:block">
+                    Uploader
+                  </div>
+                  <div className="w-24 flex-shrink-0 hidden md:block">Type</div>
+                  <div className="w-36 flex-shrink-0 hidden lg:block">Date</div>
+                  <div className="w-28 flex-shrink-0 text-right">Actions</div>
+                </div>
+
+                {/* Rows */}
+                <AnimatePresence>
+                  {(filteredUploads ?? []).map((entry, idx) => (
+                    <motion.div
+                      key={entry.blobId}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: idx * 0.03, duration: 0.2 }}
+                      className="flex items-center gap-3 px-4 py-2.5 transition-colors cursor-default group"
+                      style={{
+                        borderBottom: `1px solid ${GD.border}`,
+                        background: selectedIds.has(entry.blobId)
+                          ? GD.selectedRow
+                          : undefined,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!selectedIds.has(entry.blobId))
+                          (e.currentTarget as HTMLDivElement).style.background =
+                            GD.rowHover;
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!selectedIds.has(entry.blobId))
+                          (e.currentTarget as HTMLDivElement).style.background =
+                            "";
+                      }}
+                      data-ocid={`admin.uploads.item.${idx + 1}`}
+                    >
+                      {/* Checkbox */}
+                      <div className="w-8 flex-shrink-0">
+                        <Checkbox
+                          checked={selectedIds.has(entry.blobId)}
+                          onCheckedChange={() => toggleSelect(entry.blobId)}
+                          aria-label={`Select ${entry.fileName}`}
+                          data-ocid={`admin.uploads.checkbox.${idx + 1}`}
+                        />
+                      </div>
+
+                      {/* Thumbnail */}
+                      <div className="w-16 flex-shrink-0">
+                        <MediaThumbnail
+                          blobId={entry.blobId}
+                          fileName={entry.fileName}
+                          onClick={() =>
+                            setPreviewEntry({
+                              blobId: entry.blobId,
+                              fileName: entry.fileName,
+                              uploaderName: entry.uploaderName,
+                            })
+                          }
+                        />
+                      </div>
+
+                      {/* File name */}
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-sm font-medium truncate"
+                          style={{ color: GD.textPrimary }}
+                          title={entry.fileName}
+                        >
+                          {entry.fileName}
+                        </p>
+                        {/* Show uploader on small screens */}
+                        <p
+                          className="text-xs truncate sm:hidden"
+                          style={{ color: GD.textSecondary }}
+                        >
+                          {entry.uploaderName}
+                        </p>
+                      </div>
+
+                      {/* Uploader */}
+                      <div className="w-32 flex-shrink-0 hidden sm:flex items-center gap-2">
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                          style={{ background: GD.blue, fontSize: 10 }}
+                        >
+                          {entry.uploaderName.charAt(0).toUpperCase()}
+                        </div>
+                        <span
+                          className="text-xs truncate"
+                          style={{ color: GD.textPrimary }}
+                        >
+                          {entry.uploaderName}
+                        </span>
+                      </div>
+
+                      {/* Type chip */}
+                      <div className="w-24 flex-shrink-0 hidden md:block">
+                        {getFileTypeChip(entry.fileName)}
+                      </div>
+
+                      {/* Timestamp */}
+                      <div
+                        className="w-36 flex-shrink-0 hidden lg:block text-xs"
+                        style={{ color: GD.textSecondary }}
+                      >
+                        {formatTimestamp(entry.timestamp)}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-28 flex-shrink-0 flex items-center justify-end gap-1">
+                        {/* View */}
+                        <button
+                          type="button"
+                          onClick={() => handleViewFile(entry.blobId)}
+                          className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200"
+                          title="Open in new tab"
+                          data-ocid={`admin.uploads.view_button.${idx + 1}`}
+                        >
+                          <Eye
+                            className="w-4 h-4"
+                            style={{ color: GD.textSecondary }}
+                          />
+                        </button>
+
+                        {/* Download */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDownload(entry.blobId, entry.fileName)
+                          }
+                          disabled={downloadingIds.has(entry.blobId)}
+                          className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200 disabled:opacity-30"
+                          title="Download"
+                          data-ocid={`admin.uploads.download_button.${idx + 1}`}
+                        >
+                          {downloadingIds.has(entry.blobId) ? (
+                            <Loader2
+                              className="w-4 h-4 animate-spin"
+                              style={{ color: GD.textSecondary }}
+                            />
+                          ) : (
+                            <Download
+                              className="w-4 h-4"
+                              style={{ color: GD.blue }}
+                            />
+                          )}
+                        </button>
+
+                        {/* Delete */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={deletingIds.has(entry.blobId)}
+                              className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-red-50 disabled:opacity-30"
+                              title="Delete"
+                              data-ocid={`admin.uploads.delete_button.${idx + 1}`}
+                            >
+                              {deletingIds.has(entry.blobId) ? (
+                                <Loader2
+                                  className="w-4 h-4 animate-spin"
+                                  style={{ color: GD.textSecondary }}
+                                />
+                              ) : (
+                                <Trash2
+                                  className="w-4 h-4"
+                                  style={{ color: GD.red }}
+                                />
+                              )}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete this upload?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove the file and cannot
+                                be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                data-ocid={`admin.uploads.delete_cancel.${idx + 1}`}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(entry.blobId)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                data-ocid={`admin.uploads.delete_confirm.${idx + 1}`}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer
+        className="py-4 px-6 text-center text-xs mt-auto"
+        style={{
+          color: GD.textSecondary,
+          borderTop: `1px solid ${GD.border}`,
+          background: GD.white,
+        }}
+      >
+        <span>
+          Created by{" "}
+          <span className="font-semibold" style={{ color: GD.textPrimary }}>
+            Dhruv Dhameliya
+          </span>
+        </span>
+        <span className="mx-2">·</span>
+        <a
+          href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+          style={{ color: GD.blue }}
+        >
+          © {new Date().getFullYear()}. Built with caffeine.ai
+        </a>
       </footer>
 
+      {/* Lightbox modal */}
       <MediaPreviewModal
         entry={previewEntry}
         onClose={() => setPreviewEntry(null)}
