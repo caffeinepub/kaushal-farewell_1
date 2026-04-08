@@ -425,6 +425,10 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const isFetchingRef = useRef(false);
 
   const { actor } = useActor();
+  const actorRef = useRef(actor);
+  useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
 
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
@@ -695,14 +699,41 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockoutUntil) return;
-    if (!actor) {
-      setLoginError("Still connecting, please wait a moment and try again.");
-      return;
-    }
+
     setIsLoginLoading(true);
     setLoginError("");
+
+    // If actor isn't ready yet, poll up to 10 seconds for it to become available
+    let resolvedActor = actorRef.current;
+    if (!resolvedActor) {
+      const POLL_INTERVAL = 300;
+      const MAX_WAIT = 10_000;
+      let elapsed = 0;
+      await new Promise<void>((resolve) => {
+        const interval = setInterval(() => {
+          elapsed += POLL_INTERVAL;
+          if (actorRef.current) {
+            resolvedActor = actorRef.current;
+            clearInterval(interval);
+            resolve();
+          } else if (elapsed >= MAX_WAIT) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, POLL_INTERVAL);
+      });
+    }
+
+    if (!resolvedActor) {
+      setLoginError(
+        "Connection failed. Please refresh the page and try again.",
+      );
+      setIsLoginLoading(false);
+      return;
+    }
+
     try {
-      const token = await actor.adminLogin(password);
+      const token = await resolvedActor.adminLogin(password);
       if (token !== null) {
         setSessionToken(token);
         setIsLoggedIn(true);
@@ -958,7 +989,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   {isLoginLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing in…
+                      {actor ? "Signing in…" : "Connecting…"}
                     </>
                   ) : (
                     <>

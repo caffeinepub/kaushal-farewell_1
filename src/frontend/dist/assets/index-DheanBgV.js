@@ -42598,6 +42598,10 @@ function AdminPage({ onNavigateHome }) {
   const autoRefreshRef = reactExports.useRef(null);
   const isFetchingRef = reactExports.useRef(false);
   const { actor } = useActor();
+  const actorRef = reactExports.useRef(actor);
+  reactExports.useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
   const totalUploads = stats ? Number(stats[0]) : 0;
   const uniqueUploaders = stats ? Number(stats[1]) : 0;
   const allSelected = uploads !== null && uploads.length > 0 && selectedIds.size === uploads.length;
@@ -42838,14 +42842,36 @@ function AdminPage({ onNavigateHome }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (lockoutUntil) return;
-    if (!actor) {
-      setLoginError("Still connecting, please wait a moment and try again.");
-      return;
-    }
     setIsLoginLoading(true);
     setLoginError("");
+    let resolvedActor = actorRef.current;
+    if (!resolvedActor) {
+      const POLL_INTERVAL = 300;
+      const MAX_WAIT = 1e4;
+      let elapsed = 0;
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          elapsed += POLL_INTERVAL;
+          if (actorRef.current) {
+            resolvedActor = actorRef.current;
+            clearInterval(interval);
+            resolve();
+          } else if (elapsed >= MAX_WAIT) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, POLL_INTERVAL);
+      });
+    }
+    if (!resolvedActor) {
+      setLoginError(
+        "Connection failed. Please refresh the page and try again."
+      );
+      setIsLoginLoading(false);
+      return;
+    }
     try {
-      const token = await actor.adminLogin(password);
+      const token = await resolvedActor.adminLogin(password);
       if (token !== null) {
         setSessionToken(token);
         setIsLoggedIn(true);
@@ -43113,7 +43139,7 @@ function AdminPage({ onNavigateHome }) {
                             "data-ocid": "admin.login.submit_button",
                             children: isLoginLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 mr-2 animate-spin" }),
-                              "Signing in…"
+                              actor ? "Signing in…" : "Connecting…"
                             ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-4 h-4 mr-2" }),
                               "Sign In"
