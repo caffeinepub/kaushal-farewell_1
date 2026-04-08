@@ -8,14 +8,12 @@ import {
   CheckCircle2,
   ChevronRight,
   CloudUpload,
-  Film,
   Heart,
   ImageIcon,
   Info,
   Loader2,
   Star,
   Upload,
-  Video,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -45,8 +43,6 @@ function formatFileSize(bytes: number): string {
 function getFileIcon(file: File) {
   if (file.type.startsWith("image/"))
     return <ImageIcon className="w-4 h-4 text-coral" />;
-  if (file.type.startsWith("video/"))
-    return <Video className="w-4 h-4 text-coral" />;
   return <Upload className="w-4 h-4 text-coral" />;
 }
 
@@ -88,11 +84,9 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
       e.preventDefault();
       setIsDragging(false);
       const dropped = Array.from(e.dataTransfer.files);
-      const valid = dropped.filter(
-        (f) => f.type.startsWith("image/") || f.type.startsWith("video/"),
-      );
+      const valid = dropped.filter((f) => f.type.startsWith("image/"));
       if (valid.length !== dropped.length) {
-        toast.error("Only images and videos are supported");
+        toast.error("Only images are supported");
       }
       if (valid.length > 0) addFiles(valid);
     },
@@ -348,8 +342,8 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
               className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
               style={{ color: "oklch(0.45 0.06 40)" }}
             >
-              Share your favourite photos and videos from Kaushal's time with
-              us. Together, let's create a lasting memory.
+              Share your favourite photos from Kaushal's time with us. Together,
+              let's create a lasting memory.
             </p>
           </div>
         </motion.section>
@@ -388,7 +382,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                     className="text-sm"
                     style={{ color: "oklch(var(--muted-foreground))" }}
                   >
-                    Upload photos and videos for Kaushal
+                    Upload photos for Kaushal
                   </p>
                 </div>
               </div>
@@ -476,7 +470,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                         className="text-xs font-bold uppercase tracking-widest"
                         style={{ color: "oklch(var(--hero-brown))" }}
                       >
-                        Step 2 — Add Photos & Videos
+                        Step 2 — Add Photos
                       </Label>
 
                       <div
@@ -503,7 +497,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                         <input
                           ref={fileInputRef}
                           type="file"
-                          accept="image/*,video/*"
+                          accept="image/*"
                           multiple
                           onChange={handleFileInput}
                           className="hidden"
@@ -525,7 +519,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                               className="w-12 h-12 rounded-2xl flex items-center justify-center"
                               style={{ backgroundColor: "oklch(0.93 0.04 55)" }}
                             >
-                              <Film
+                              <ImageIcon
                                 className="w-5 h-5"
                                 style={{ color: "oklch(var(--coral-primary))" }}
                               />
@@ -536,8 +530,8 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                             style={{ color: "oklch(var(--hero-brown))" }}
                           >
                             {isDragging
-                              ? "Drop your files here!"
-                              : "Drag & drop photos/videos here"}
+                              ? "Drop your photos here!"
+                              : "Drag & drop photos here"}
                           </p>
                           <p
                             className="text-xs"
@@ -550,7 +544,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                             >
                               browse files
                             </span>{" "}
-                            — JPG, PNG, MP4, MOV and more
+                            — JPG, PNG, WEBP, HEIC and more
                           </p>
                         </div>
                       </div>
@@ -835,7 +829,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
               <ul className="space-y-2">
                 {[
                   "Enter your name so we know who sent it",
-                  "Select or drag-drop photos and videos",
+                  "Select or drag-drop photos",
                   "Add an optional personal message",
                   "Hit 'Share Memory' — we'll handle the rest",
                   "Only Kaushal's team can access uploads",
@@ -895,7 +889,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
                   className="font-semibold"
                   style={{ color: "oklch(var(--hero-brown))" }}
                 >
-                  Dhruv Dhameliya
+                  Kuashal vidhyabhavan
                 </span>
               </span>
               <span

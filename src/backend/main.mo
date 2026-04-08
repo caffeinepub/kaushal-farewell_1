@@ -5,16 +5,16 @@ import Time "mo:core/Time";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 
-import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
-import Storage "blob-storage/Storage";
-import MixinStorage "blob-storage/Mixin";
+import MixinAuthorization "mo:caffeineai-authorization/MixinAuthorization";
+import AccessControl "mo:caffeineai-authorization/access-control";
+import Storage "mo:caffeineai-object-storage/Storage";
+import MixinObjectStorage "mo:caffeineai-object-storage/Mixin";
 import Set "mo:core/Set";
 import Nat "mo:core/Nat";
 
 
 actor {
-  include MixinStorage();
+  include MixinObjectStorage();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);

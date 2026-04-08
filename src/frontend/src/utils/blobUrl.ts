@@ -1,25 +1,16 @@
-import { HttpAgent } from "@icp-sdk/core/agent";
-import { loadConfig } from "../config";
-import { StorageClient } from "./StorageClient";
+import { loadConfig } from "@caffeineai/core-infrastructure";
 
 const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
 
-let _storageClientPromise: Promise<StorageClient> | null = null;
+let _directUrlBasePromise: Promise<string> | null = null;
 
-async function getStorageClient(): Promise<StorageClient> {
-  if (!_storageClientPromise) {
-    _storageClientPromise = loadConfig().then((config) => {
-      const agent = new HttpAgent({ host: config.backend_host });
-      return new StorageClient(
-        config.bucket_name,
-        config.storage_gateway_url,
-        config.backend_canister_id,
-        config.project_id,
-        agent,
-      );
-    });
+async function getStorageGatewayUrl(): Promise<string> {
+  if (!_directUrlBasePromise) {
+    _directUrlBasePromise = loadConfig().then(
+      (config) => config.storage_gateway_url,
+    );
   }
-  return _storageClientPromise;
+  return _directUrlBasePromise;
 }
 
 /**
@@ -38,6 +29,8 @@ export async function getDirectUrlFromBlobId(blobId: string): Promise<string> {
   }
 
   const hash = blobId.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
-  const storageClient = await getStorageClient();
-  return storageClient.getDirectURL(hash);
+  const gatewayUrl = await getStorageGatewayUrl();
+  // Construct direct URL: {gateway_url}/{hash}
+  const base = gatewayUrl.endsWith("/") ? gatewayUrl.slice(0, -1) : gatewayUrl;
+  return `${base}/${hash}`;
 }

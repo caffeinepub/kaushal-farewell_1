@@ -42,8 +42,8 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { UploadEntry } from "../backend";
 import { useActor } from "../hooks/useActor";
+import type { UploadEntry } from "../types";
 import { getDirectUrlFromBlobId } from "../utils/blobUrl";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -936,7 +936,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
           <span>
             Created by{" "}
             <span className="font-semibold" style={{ color: GD.textPrimary }}>
-              Dhruv Dhameliya
+              Kuashal vidhyabhavan
             </span>
           </span>
           <span className="mx-2">·</span>
@@ -1634,7 +1634,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         <span>
           Created by{" "}
           <span className="font-semibold" style={{ color: GD.textPrimary }}>
-            Dhruv Dhameliya
+            Kuashal vidhyabhavan
           </span>
         </span>
         <span className="mx-2">·</span>
