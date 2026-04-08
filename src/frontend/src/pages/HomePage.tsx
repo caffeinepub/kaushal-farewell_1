@@ -63,11 +63,7 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
   const addFiles = useCallback((newFiles: File[]) => {
     const oversized = newFiles.filter((f) => f.size > MAX_FILE_SIZE);
     if (oversized.length > 0) {
-      for (const f of oversized) {
-        toast.error(
-          `"${f.name}" is too large (${(f.size / (1024 * 1024)).toFixed(1)} MB). Max allowed size is 40 MB.`,
-        );
-      }
+      toast.error("Photo is too large. Maximum size is 40MB.");
     }
     const valid = newFiles.filter((f) => f.size <= MAX_FILE_SIZE);
     if (valid.length === 0) return;
@@ -162,17 +158,22 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
             f.id === fileItem.id ? { ...f, status: "done", progress: 100 } : f,
           ),
         );
-      } catch (err) {
+      } catch {
         allSuccess = false;
-        const errorMsg = err instanceof Error ? err.message : "Upload failed";
         setFiles((prev) =>
           prev.map((f) =>
             f.id === fileItem.id
-              ? { ...f, status: "error", error: errorMsg }
+              ? {
+                  ...f,
+                  status: "error",
+                  error: "Upload failed. Please try again.",
+                }
               : f,
           ),
         );
-        toast.error(`Failed to upload ${fileItem.file.name}`);
+        toast.error(
+          "Upload failed. Please check your connection and try again.",
+        );
       }
     }
 
