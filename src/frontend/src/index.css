@@ -18,6 +18,22 @@
   font-display: swap;
 }
 
+@layer utilities {
+  /* Google Drive hover utilities for admin panel */
+  .gd-btn-hover:hover {
+    background: #f1f3f4;
+  }
+  .gd-btn-blue-hover:hover {
+    background: #e8f0fe;
+  }
+  .gd-btn-red-hover:hover {
+    background: #fce8e6;
+  }
+  .lx-btn-hover:hover {
+    color: oklch(0.92 0.03 55);
+  }
+}
+
 @layer base {
   :root {
     --radius: 0.625rem;

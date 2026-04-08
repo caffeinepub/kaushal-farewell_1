@@ -27,7 +27,7 @@ import {
   Eye,
   File,
   FileImage,
-  FileVideo,
+  Heart,
   Loader2,
   LogOut,
   RefreshCw,
@@ -53,7 +53,7 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const LS_TOKEN_KEY = "kf-admin-token";
 const AUTO_REFRESH_MS = 15000;
 
-// ─── Google Drive colour palette (hex, not oklch) ────────────────────────────
+// ─── Google Drive colour palette (inner dashboard only) ───────────────────────
 const GD = {
   bg: "#f8f9fa",
   white: "#ffffff",
@@ -69,6 +69,26 @@ const GD = {
   green: "#137333",
   rowHover: "#f1f3f4",
   selectedRow: "#e8f0fe",
+} as const;
+
+// ─── Luxury/Cinema dark palette (login + outer shell) ────────────────────────
+const LX = {
+  bg: "oklch(0.18 0.04 35)",
+  bgGradient:
+    "linear-gradient(160deg, oklch(0.18 0.04 35) 0%, oklch(0.14 0.06 30) 60%, oklch(0.12 0.08 25) 100%)",
+  card: "oklch(0.22 0.04 35)",
+  cardBorder: "oklch(0.3 0.06 35 / 0.6)",
+  coral: "oklch(0.63 0.14 29)",
+  coralLight: "oklch(0.72 0.12 28)",
+  coralBg: "oklch(0.25 0.06 35)",
+  text: "oklch(0.92 0.03 55)",
+  textMuted: "oklch(0.65 0.05 40)",
+  textDim: "oklch(0.45 0.04 35)",
+  gold: "oklch(0.76 0.09 65)",
+  error: "oklch(0.62 0.18 25)",
+  errorBg: "oklch(0.2 0.06 25)",
+  headerBg: "oklch(0.16 0.05 32)",
+  headerBorder: "oklch(0.28 0.07 32)",
 } as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -115,7 +135,7 @@ function getFileTypeChip(fileName: string) {
         className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
         style={{ backgroundColor: GD.greenBg, color: GD.green }}
       >
-        <FileVideo className="w-3 h-3" />
+        <FileImage className="w-3 h-3" />
         Video
       </span>
     );
@@ -142,7 +162,7 @@ interface PreviewEntry {
   uploaderName: string;
 }
 
-type FileTypeFilter = "all" | "images" | "videos";
+type FileTypeFilter = "all" | "images";
 
 // ─── MediaThumbnail ──────────────────────────────────────────────────────────
 function MediaThumbnail({
@@ -156,12 +176,20 @@ function MediaThumbnail({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getDirectUrlFromBlobId(blobId).then((resolved) => {
-      if (!cancelled) setUrl(resolved);
-    });
+    setLoaded(false);
+    setError(false);
+    setUrl(null);
+    getDirectUrlFromBlobId(blobId)
+      .then((resolved) => {
+        if (!cancelled) setUrl(resolved);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -172,29 +200,44 @@ function MediaThumbnail({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none"
+        className="relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2"
         style={{
           width: 56,
           height: 40,
           borderRadius: 4,
           border: `1px solid ${GD.border}`,
+          background: GD.bg,
         }}
         aria-label="Preview image"
       >
-        {(!loaded || !url) && (
+        {(!loaded || !url) && !error && (
           <Skeleton className="absolute inset-0" style={{ borderRadius: 4 }} />
         )}
-        {url && (
+        {error && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: GD.bg }}
+          >
+            <FileImage
+              className="w-4 h-4"
+              style={{ color: GD.textSecondary }}
+            />
+          </div>
+        )}
+        {url && !error && (
           <img
             src={url}
             alt={fileName}
             className="w-full h-full object-cover"
             style={{ display: loaded ? "block" : "none", borderRadius: 4 }}
             onLoad={() => setLoaded(true)}
-            onError={() => setLoaded(true)}
+            onError={() => {
+              setLoaded(true);
+              setError(true);
+            }}
           />
         )}
-        {loaded && url && (
+        {loaded && url && !error && (
           <div
             className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
             style={{ background: "rgba(0,0,0,0.25)", borderRadius: 4 }}
@@ -202,51 +245,6 @@ function MediaThumbnail({
             <Eye className="w-3 h-3 text-white" />
           </div>
         )}
-      </button>
-    );
-  }
-
-  if (isVideo(fileName)) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="relative flex-shrink-0 overflow-hidden cursor-pointer focus:outline-none"
-        style={{
-          width: 64,
-          height: 40,
-          borderRadius: 4,
-          border: `1px solid ${GD.border}`,
-          background: "#000",
-        }}
-        aria-label="Preview video"
-      >
-        {url ? (
-          <video
-            src={url}
-            muted
-            preload="metadata"
-            className="w-full h-full object-cover"
-            style={{ pointerEvents: "none", borderRadius: 4 }}
-          >
-            <track kind="captions" />
-          </video>
-        ) : (
-          <Skeleton className="absolute inset-0" style={{ borderRadius: 4 }} />
-        )}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.35)", borderRadius: 4 }}
-        >
-          <div
-            className="w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.9)" }}
-          >
-            <span style={{ color: "#202124", fontSize: 8, marginLeft: 1 }}>
-              ▶
-            </span>
-          </div>
-        </div>
       </button>
     );
   }
@@ -307,10 +305,7 @@ function MediaPreviewModal({
             <div>
               <DialogTitle
                 className="text-base font-medium leading-tight"
-                style={{
-                  color: GD.textPrimary,
-                  fontFamily: "system-ui, sans-serif",
-                }}
+                style={{ color: GD.textPrimary }}
               >
                 {entry.fileName}
               </DialogTitle>
@@ -322,7 +317,8 @@ function MediaPreviewModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100"
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors gd-btn-hover"
+              style={{ background: "transparent" }}
               aria-label="Close preview"
             >
               <X className="w-4 h-4" style={{ color: GD.textSecondary }} />
@@ -449,8 +445,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
           u.uploaderName.toLowerCase().includes(q);
         const matchesType =
           fileTypeFilter === "all" ||
-          (fileTypeFilter === "images" && isImage(u.fileName)) ||
-          (fileTypeFilter === "videos" && isVideo(u.fileName));
+          (fileTypeFilter === "images" && isImage(u.fileName));
         return matchesSearch && matchesType;
       })
     : null;
@@ -595,6 +590,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     try {
       const url = await getDirectUrlFromBlobId(blobId);
       const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.blob();
       const objectUrl = URL.createObjectURL(data);
       const a = document.createElement("a");
@@ -604,6 +600,9 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
+      toast.success(`Downloaded ${fileName}`);
+    } catch {
+      toast.error("Download failed. Please try again.");
     } finally {
       setDownloadingIds((prev) => {
         const next = new Set(prev);
@@ -648,12 +647,13 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   const handleDeleteSelected = async () => {
     if (!sessionToken || !actor || selectedIds.size === 0) return;
+    const count = selectedIds.size;
     setIsDeletingSelected(true);
     try {
       await actor.deleteSelectedUploads(Array.from(selectedIds), sessionToken);
       setSelectedIds(new Set());
       await fetchAdminData(sessionToken);
-      toast.success(`${selectedIds.size} file(s) deleted.`);
+      toast.success(`${count} file(s) deleted.`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Unauthorized")) {
@@ -700,6 +700,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
       return;
     }
     setIsLoginLoading(true);
+    setLoginError("");
     try {
       const token = await actor.adminLogin(password);
       if (token !== null) {
@@ -751,91 +752,123 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   void lockoutSecondsLeft;
 
-  // ─── Login Page ───────────────────────────────────────────────────────────
+  // ─── Login Page — Luxury Dark Cinema Theme ────────────────────────────────
   if (!isLoggedIn) {
     return (
       <div
         className="min-h-screen flex flex-col"
-        style={{
-          background: GD.bg,
-          fontFamily: "system-ui, -apple-system, sans-serif",
-        }}
+        style={{ background: LX.bgGradient }}
       >
+        {/* Decorative orbs */}
+        <div
+          className="fixed top-0 right-0 w-96 h-96 pointer-events-none z-0 opacity-20"
+          style={{
+            background:
+              "radial-gradient(ellipse at top right, oklch(0.63 0.14 29 / 0.4), transparent 70%)",
+          }}
+        />
+        <div
+          className="fixed bottom-0 left-0 w-64 h-64 pointer-events-none z-0 opacity-15"
+          style={{
+            background:
+              "radial-gradient(ellipse at bottom left, oklch(0.76 0.09 65 / 0.3), transparent 70%)",
+          }}
+        />
+
         {/* Top bar */}
         <header
-          className="flex items-center px-6 py-3 shadow-sm"
+          className="relative z-10 flex items-center px-6 py-4"
           style={{
-            background: GD.white,
-            borderBottom: `1px solid ${GD.border}`,
+            background: LX.headerBg,
+            borderBottom: `1px solid ${LX.headerBorder}`,
           }}
         >
           <button
             type="button"
             onClick={onNavigateHome}
-            className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-blue-600"
-            style={{ color: GD.textSecondary }}
+            className="flex items-center gap-2 text-sm font-medium transition-colors lx-btn-hover"
+            style={{ color: LX.textMuted }}
             data-ocid="admin.back.link"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </button>
-          <div className="mx-4 w-px h-4" style={{ background: GD.border }} />
+          <div
+            className="mx-4 w-px h-4"
+            style={{ background: LX.headerBorder }}
+          />
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5" style={{ color: GD.blue }} />
-            <span
-              className="font-medium text-sm"
-              style={{ color: GD.textPrimary }}
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 30))",
+              }}
             >
-              Kaushal Farewell Admin
+              <Shield className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span
+              className="font-display font-bold text-sm"
+              style={{ color: LX.text }}
+            >
+              Kaushal Farewell
+            </span>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: LX.coralBg, color: LX.coral }}
+            >
+              Admin
             </span>
           </div>
         </header>
 
-        <main className="flex-1 flex items-center justify-center px-4 py-16">
+        <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-16">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.5 }}
             className="w-full max-w-sm"
           >
-            {/* Google-style sign-in card */}
+            {/* Luxury sign-in card */}
             <div
               className="p-8"
               style={{
-                background: GD.white,
-                border: `1px solid ${GD.border}`,
-                borderRadius: 8,
-                boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                background: LX.card,
+                border: `1px solid ${LX.cardBorder}`,
+                borderRadius: 16,
+                boxShadow:
+                  "0 24px 64px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.2)",
               }}
             >
-              {/* Logo area */}
-              <div className="text-center mb-6">
+              {/* Logo / branding */}
+              <div className="text-center mb-8">
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-                  style={{ background: GD.blueBg }}
-                >
-                  <Shield className="w-6 h-6" style={{ color: GD.blue }} />
-                </div>
-                <h2
-                  className="text-2xl font-normal mb-1"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
                   style={{
-                    color: GD.textPrimary,
-                    fontFamily: "system-ui, sans-serif",
+                    background:
+                      "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.72 0.11 30))",
+                    boxShadow: "0 8px 24px oklch(0.63 0.14 29 / 0.35)",
                   }}
                 >
-                  Sign in
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h2
+                  className="font-display font-bold text-2xl mb-1"
+                  style={{ color: LX.text }}
+                >
+                  Admin Access
                 </h2>
-                <p className="text-sm" style={{ color: GD.textSecondary }}>
-                  to Admin Panel
+                <p className="text-sm" style={{ color: LX.textMuted }}>
+                  Sign in to manage uploads
                 </p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label
                     htmlFor="admin-email"
-                    className="text-sm font-medium"
-                    style={{ color: GD.textPrimary }}
+                    className="text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: LX.textMuted }}
                   >
                     Email
                   </Label>
@@ -846,20 +879,21 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     disabled={!!lockoutUntil}
-                    className="h-10 text-sm"
+                    className="h-11 text-sm border-0 focus-visible:ring-1"
                     style={{
-                      borderColor: GD.border,
-                      borderRadius: 4,
-                      color: GD.textPrimary,
+                      background: "oklch(0.28 0.04 35)",
+                      color: LX.text,
+                      borderRadius: 8,
+                      outline: "1px solid oklch(0.35 0.05 35)",
                     }}
                     data-ocid="admin.email.input"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label
                     htmlFor="admin-password"
-                    className="text-sm font-medium"
-                    style={{ color: GD.textPrimary }}
+                    className="text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: LX.textMuted }}
                   >
                     Password
                   </Label>
@@ -871,81 +905,102 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                     placeholder="••••••••"
                     required
                     disabled={!!lockoutUntil}
-                    className="h-10 text-sm"
+                    className="h-11 text-sm border-0 focus-visible:ring-1"
                     style={{
-                      borderColor: GD.border,
-                      borderRadius: 4,
-                      color: GD.textPrimary,
+                      background: "oklch(0.28 0.04 35)",
+                      color: LX.text,
+                      borderRadius: 8,
+                      outline: "1px solid oklch(0.35 0.05 35)",
                     }}
                     data-ocid="admin.password.input"
                   />
                 </div>
 
-                {loginError && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-                    style={{
-                      background: GD.redBg,
-                      color: GD.red,
-                      border: "1px solid #f5c6c4",
-                      borderRadius: 4,
-                    }}
-                    data-ocid="admin.login.error_state"
-                  >
-                    <XCircle className="w-4 h-4 flex-shrink-0" />
-                    {loginError}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {loginError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm"
+                      style={{
+                        background: LX.errorBg,
+                        color: LX.error,
+                        border: "1px solid oklch(0.45 0.12 25 / 0.5)",
+                        borderRadius: 8,
+                      }}
+                      data-ocid="admin.login.error_state"
+                    >
+                      <XCircle className="w-4 h-4 flex-shrink-0" />
+                      {loginError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                <div className="flex justify-end pt-1">
-                  <Button
-                    type="submit"
-                    disabled={!!lockoutUntil || isLoginLoading}
-                    className="px-8 h-9 text-sm font-medium text-white"
-                    style={{
-                      background:
-                        isLoginLoading || lockoutUntil ? "#ccc" : GD.blue,
-                      borderRadius: 4,
-                      border: "none",
-                    }}
-                    data-ocid="admin.login.submit_button"
-                  >
-                    {isLoginLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Signing in…
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  type="submit"
+                  disabled={!!lockoutUntil || isLoginLoading}
+                  className="w-full h-12 text-sm font-bold text-white mt-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  style={{
+                    background:
+                      isLoginLoading || lockoutUntil
+                        ? "oklch(0.35 0.04 35)"
+                        : "linear-gradient(135deg, oklch(0.63 0.14 29), oklch(0.7 0.12 30))",
+                    borderRadius: 10,
+                    border: "none",
+                    boxShadow:
+                      !isLoginLoading && !lockoutUntil
+                        ? "0 4px 16px oklch(0.63 0.14 29 / 0.35)"
+                        : "none",
+                  }}
+                  data-ocid="admin.login.submit_button"
+                >
+                  {isLoginLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing in…
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Sign In
+                    </>
+                  )}
+                </Button>
               </form>
             </div>
+
+            {/* Subtle hint */}
+            <p
+              className="text-center text-xs mt-4"
+              style={{ color: LX.textDim }}
+            >
+              Authorised personnel only
+            </p>
           </motion.div>
         </main>
 
         {/* Footer */}
         <footer
-          className="py-4 px-6 text-center text-xs"
+          className="relative z-10 py-5 px-6 text-center text-xs"
           style={{
-            color: GD.textSecondary,
-            borderTop: `1px solid ${GD.border}`,
+            borderTop: `1px solid ${LX.headerBorder}`,
+            color: LX.textDim,
           }}
         >
           <span>
             Created by{" "}
-            <span className="font-semibold" style={{ color: GD.textPrimary }}>
+            <span className="font-semibold" style={{ color: LX.textMuted }}>
               Kuashal vidhyabhavan
             </span>
           </span>
-          <span className="mx-2">·</span>
+          <span className="mx-2 opacity-40">·</span>
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:underline"
-            style={{ color: GD.blue }}
+            className="hover:underline transition-colors"
+            style={{ color: LX.coral }}
           >
             © {new Date().getFullYear()}. Built with caffeine.ai
           </a>
@@ -954,50 +1009,50 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     );
   }
 
-  // ─── Admin Dashboard ──────────────────────────────────────────────────────
+  // ─── Admin Dashboard — Google Drive Inner Theme ───────────────────────────
   const imageCount = uploads
     ? uploads.filter((u) => isImage(u.fileName)).length
-    : 0;
-  const videoCount = uploads
-    ? uploads.filter((u) => isVideo(u.fileName)).length
     : 0;
 
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{
-        background: GD.bg,
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
+      style={{ background: LX.bgGradient }}
     >
-      {/* Top App Bar — Google Drive style */}
+      {/* Outer luxury header — matches main site feel */}
       <header
         className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 h-14"
         style={{
-          background: GD.white,
-          borderBottom: `1px solid ${GD.border}`,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          background: LX.headerBg,
+          borderBottom: `1px solid ${LX.headerBorder}`,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
         }}
       >
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onNavigateHome}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100"
-            style={{ color: GD.textSecondary }}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors lx-btn-hover"
+            style={{ color: LX.textMuted }}
             data-ocid="admin.back.link"
           >
             <ArrowLeft className="w-4 h-4" />
             Home
           </button>
-          <div className="w-px h-5" style={{ background: GD.border }} />
+          <div className="w-px h-5" style={{ background: LX.headerBorder }} />
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5" style={{ color: GD.blue }} />
+            <Heart className="w-4 h-4" style={{ color: LX.coral }} />
             <span
-              className="font-medium text-base"
-              style={{ color: GD.textPrimary }}
+              className="font-display font-bold text-sm"
+              style={{ color: LX.text }}
             >
-              Admin Panel
+              Kaushal Farewell
+            </span>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: LX.coralBg, color: LX.coral }}
+            >
+              Admin
             </span>
           </div>
         </div>
@@ -1007,23 +1062,23 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
             <span
               className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
               style={{
-                background: GD.greenBg,
-                color: GD.green,
-                border: "1px solid #ceead6",
+                background: "oklch(0.2 0.06 155 / 0.4)",
+                color: "oklch(0.7 0.14 155)",
+                border: "1px solid oklch(0.3 0.1 155 / 0.4)",
               }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ background: GD.green }}
+                style={{ background: "oklch(0.65 0.18 155)" }}
               />
-              Auto-refresh on
+              Live
             </span>
           )}
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded transition-colors hover:bg-gray-100"
-            style={{ color: GD.textSecondary }}
+            className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors lx-btn-hover"
+            style={{ color: LX.textMuted }}
             data-ocid="admin.signout.button"
           >
             <LogOut className="w-4 h-4" />
@@ -1032,15 +1087,16 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-5">
+      {/* Main content — Drive-style white panel inside the dark luxury shell */}
+      <main className="flex-1 px-4 sm:px-6 py-6 max-w-6xl mx-auto w-full space-y-5">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.35 }}
           className="space-y-5"
         >
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Stats Row — white cards on dark background */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
               {
                 icon: <Upload className="w-5 h-5" style={{ color: GD.blue }} />,
@@ -1067,15 +1123,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 bg: GD.blueBg,
                 ocid: "admin.images.card",
               },
-              {
-                icon: (
-                  <FileVideo className="w-5 h-5" style={{ color: GD.green }} />
-                ),
-                value: videoCount,
-                label: "Videos",
-                bg: GD.greenBg,
-                ocid: "admin.videos.card",
-              },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -1084,7 +1131,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   background: GD.white,
                   border: `1px solid ${GD.border}`,
                   borderRadius: 8,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
                 }}
                 data-ocid={stat.ocid}
               >
@@ -1109,13 +1156,13 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
             ))}
           </div>
 
-          {/* Files Panel */}
+          {/* Files Panel — pure Google Drive white */}
           <div
             style={{
               background: GD.white,
               border: `1px solid ${GD.border}`,
               borderRadius: 8,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
               overflow: "hidden",
             }}
           >
@@ -1246,8 +1293,8 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete ALL uploads?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will permanently remove all {uploads.length}{" "}
-                          uploaded files and cannot be undone.
+                          Delete all {uploads.length} files? This cannot be
+                          undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -1311,7 +1358,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                 )}
               </div>
 
-              {/* File type filter chips */}
+              {/* Filter chips */}
               <div className="flex items-center gap-2">
                 <FilterChip
                   label="All"
@@ -1325,16 +1372,10 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                   onClick={() => setFileTypeFilter("images")}
                   icon={<FileImage className="w-3.5 h-3.5" />}
                 />
-                <FilterChip
-                  label="Videos"
-                  active={fileTypeFilter === "videos"}
-                  onClick={() => setFileTypeFilter("videos")}
-                  icon={<FileVideo className="w-3.5 h-3.5" />}
-                />
               </div>
             </div>
 
-            {/* Files list / table */}
+            {/* Files list */}
             {uploadsLoading ? (
               <div className="p-5 space-y-3">
                 {[1, 2, 3, 4].map((i) => (
@@ -1485,7 +1526,6 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                         >
                           {entry.fileName}
                         </p>
-                        {/* Show uploader on small screens */}
                         <p
                           className="text-xs truncate sm:hidden"
                           style={{ color: GD.textSecondary }}
@@ -1529,14 +1569,12 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                         <button
                           type="button"
                           onClick={() => handleViewFile(entry.blobId)}
-                          className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200"
+                          className="w-7 h-7 flex items-center justify-center rounded transition-colors gd-btn-hover"
+                          style={{ color: GD.textSecondary }}
                           title="Open in new tab"
                           data-ocid={`admin.uploads.view_button.${idx + 1}`}
                         >
-                          <Eye
-                            className="w-4 h-4"
-                            style={{ color: GD.textSecondary }}
-                          />
+                          <Eye className="w-4 h-4" />
                         </button>
 
                         {/* Download */}
@@ -1546,20 +1584,15 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                             handleDownload(entry.blobId, entry.fileName)
                           }
                           disabled={downloadingIds.has(entry.blobId)}
-                          className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-gray-200 disabled:opacity-30"
+                          className="w-7 h-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 gd-btn-blue-hover"
+                          style={{ color: GD.blue }}
                           title="Download"
                           data-ocid={`admin.uploads.download_button.${idx + 1}`}
                         >
                           {downloadingIds.has(entry.blobId) ? (
-                            <Loader2
-                              className="w-4 h-4 animate-spin"
-                              style={{ color: GD.textSecondary }}
-                            />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Download
-                              className="w-4 h-4"
-                              style={{ color: GD.blue }}
-                            />
+                            <Download className="w-4 h-4" />
                           )}
                         </button>
 
@@ -1569,20 +1602,15 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
                             <button
                               type="button"
                               disabled={deletingIds.has(entry.blobId)}
-                              className="w-7 h-7 flex items-center justify-center rounded opacity-60 hover:opacity-100 transition-opacity hover:bg-red-50 disabled:opacity-30"
+                              className="w-7 h-7 flex items-center justify-center rounded transition-colors disabled:opacity-30 gd-btn-red-hover"
+                              style={{ color: GD.red }}
                               title="Delete"
                               data-ocid={`admin.uploads.delete_button.${idx + 1}`}
                             >
                               {deletingIds.has(entry.blobId) ? (
-                                <Loader2
-                                  className="w-4 h-4 animate-spin"
-                                  style={{ color: GD.textSecondary }}
-                                />
+                                <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
-                                <Trash2
-                                  className="w-4 h-4"
-                                  style={{ color: GD.red }}
-                                />
+                                <Trash2 className="w-4 h-4" />
                               )}
                             </button>
                           </AlertDialogTrigger>
@@ -1622,28 +1650,28 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
         </motion.div>
       </main>
 
-      {/* Footer */}
+      {/* Footer — luxury theme */}
       <footer
         className="py-4 px-6 text-center text-xs mt-auto"
         style={{
-          color: GD.textSecondary,
-          borderTop: `1px solid ${GD.border}`,
-          background: GD.white,
+          color: LX.textDim,
+          borderTop: `1px solid ${LX.headerBorder}`,
+          background: LX.headerBg,
         }}
       >
         <span>
           Created by{" "}
-          <span className="font-semibold" style={{ color: GD.textPrimary }}>
+          <span className="font-semibold" style={{ color: LX.textMuted }}>
             Kuashal vidhyabhavan
           </span>
         </span>
-        <span className="mx-2">·</span>
+        <span className="mx-2 opacity-40">·</span>
         <a
           href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:underline"
-          style={{ color: GD.blue }}
+          className="hover:underline transition-colors"
+          style={{ color: LX.coral }}
         >
           © {new Date().getFullYear()}. Built with caffeine.ai
         </a>
