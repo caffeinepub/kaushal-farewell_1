@@ -42239,14 +42239,16 @@ function useActor() {
   };
 }
 const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
-let _directUrlBasePromise = null;
-async function getStorageGatewayUrl() {
-  if (!_directUrlBasePromise) {
-    _directUrlBasePromise = loadConfig().then(
-      (config) => config.storage_gateway_url
-    );
+let _configPromise = null;
+async function getStorageConfig() {
+  if (!_configPromise) {
+    _configPromise = loadConfig().then((config) => ({
+      storageGatewayUrl: config.storage_gateway_url,
+      backendCanisterId: config.backend_canister_id,
+      projectId: config.project_id
+    }));
   }
-  return _directUrlBasePromise;
+  return _configPromise;
 }
 async function getDirectUrlFromBlobId(blobId) {
   if (!blobId) return blobId;
@@ -42254,9 +42256,14 @@ async function getDirectUrlFromBlobId(blobId) {
     return blobId;
   }
   const hash = blobId.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
-  const gatewayUrl = await getStorageGatewayUrl();
-  const base = gatewayUrl.endsWith("/") ? gatewayUrl.slice(0, -1) : gatewayUrl;
-  return `${base}/${hash}`;
+  const { storageGatewayUrl, backendCanisterId, projectId } = await getStorageConfig();
+  const base = storageGatewayUrl.endsWith("/") ? storageGatewayUrl.slice(0, -1) : storageGatewayUrl;
+  const params = new URLSearchParams({
+    blob_hash: hash,
+    owner_id: backendCanisterId,
+    project_id: projectId
+  });
+  return `${base}/v1/blob/?${params.toString()}`;
 }
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
