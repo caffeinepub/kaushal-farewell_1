@@ -15889,55 +15889,6 @@ function InternetIdentityProvider({ children, createOptions }) {
     children
   });
 }
-function hasAccessControl(actor) {
-  return typeof actor === "object" && actor !== null && "_initializeAccessControl" in actor;
-}
-const ACTOR_QUERY_KEY = "actor";
-function useActor$1(createActor2) {
-  const { identity } = useInternetIdentity();
-  const queryClient2 = useQueryClient();
-  const actorQuery = useQuery({
-    queryKey: [ACTOR_QUERY_KEY, identity == null ? void 0 : identity.getPrincipal().toString()],
-    queryFn: async () => {
-      const isAuthenticated = !!identity;
-      if (!isAuthenticated) {
-        return await createActorWithConfig(createActor2);
-      }
-      const actorOptions = {
-        agentOptions: {
-          identity
-        }
-      };
-      const actor = await createActorWithConfig(createActor2, actorOptions);
-      if (hasAccessControl(actor)) {
-        await actor._initializeAccessControl();
-      }
-      return actor;
-    },
-    // Only refetch when identity changes
-    staleTime: Number.POSITIVE_INFINITY,
-    // This will cause the actor to be recreated when the identity changes
-    enabled: true
-  });
-  reactExports.useEffect(() => {
-    if (actorQuery.data) {
-      queryClient2.invalidateQueries({
-        predicate: (query) => {
-          return !query.queryKey.includes(ACTOR_QUERY_KEY);
-        }
-      });
-      queryClient2.refetchQueries({
-        predicate: (query) => {
-          return !query.queryKey.includes(ACTOR_QUERY_KEY);
-        }
-      });
-    }
-  }, [actorQuery.data, queryClient2]);
-  return {
-    actor: actorQuery.data || null,
-    isFetching: actorQuery.isFetching
-  };
-}
 var client = { exports: {} };
 var reactDomClient_production = {};
 var scheduler = { exports: {} };
@@ -42230,14 +42181,62 @@ function createActor(canisterId, _uploadFile, _downloadFile, options = {}) {
   });
   return new Backend(actor, _uploadFile, _downloadFile, options.processError);
 }
+const IC_MAINNET_API = "https://icp-api.io";
+function createIcApiFetch() {
+  const baseFetch = globalThis.fetch.bind(globalThis);
+  return function icApiFetch(input, init) {
+    let url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes("localhost:8081/api/")) {
+      url = url.replace(
+        /https?:\/\/localhost:\d+\/api\//,
+        `${IC_MAINNET_API}/api/`
+      );
+      return baseFetch(url, init);
+    }
+    return baseFetch(input, init);
+  };
+}
 const createActorFn = (canisterId, uploadFile, downloadFile, options) => createActor(
   canisterId,
   uploadFile,
   downloadFile,
   options
 );
+async function buildActor(identity) {
+  return createActorWithConfig(createActorFn, {
+    agentOptions: {
+      ...identity ? { identity } : {},
+      // Patch fetch so that agent.call() for StorageClient.getCertificate()
+      // goes to icp-api.io instead of localhost:8081, enabling v3 sync calls
+      // which return the IC certificate needed for storage uploads.
+      fetch: createIcApiFetch()
+    }
+  });
+}
+const ACTOR_QUERY_KEY = "actor";
 function useActor() {
-  return useActor$1(createActorFn);
+  const { identity } = useInternetIdentity();
+  const queryClient2 = useQueryClient();
+  const actorQuery = useQuery({
+    queryKey: [ACTOR_QUERY_KEY, identity == null ? void 0 : identity.getPrincipal().toString()],
+    queryFn: () => buildActor(identity),
+    staleTime: Number.POSITIVE_INFINITY,
+    enabled: true
+  });
+  reactExports.useEffect(() => {
+    if (actorQuery.data) {
+      queryClient2.invalidateQueries({
+        predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY)
+      });
+      queryClient2.refetchQueries({
+        predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY)
+      });
+    }
+  }, [actorQuery.data, queryClient2]);
+  return {
+    actor: actorQuery.data ?? null,
+    isFetching: actorQuery.isFetching
+  };
 }
 const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
 let _directUrlBasePromise = null;
