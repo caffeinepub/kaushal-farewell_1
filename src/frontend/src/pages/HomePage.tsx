@@ -58,8 +58,20 @@ export default function HomePage({ onNavigateAdmin }: HomePageProps) {
   const uploadMutation = useUploadMemory();
   const { actor, isFetching: isActorLoading } = useActor();
 
+  const MAX_FILE_SIZE = 40 * 1024 * 1024; // 40 MB
+
   const addFiles = useCallback((newFiles: File[]) => {
-    const items: FileItem[] = newFiles.map((f) => ({
+    const oversized = newFiles.filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      for (const f of oversized) {
+        toast.error(
+          `"${f.name}" is too large (${(f.size / (1024 * 1024)).toFixed(1)} MB). Max allowed size is 40 MB.`,
+        );
+      }
+    }
+    const valid = newFiles.filter((f) => f.size <= MAX_FILE_SIZE);
+    if (valid.length === 0) return;
+    const items: FileItem[] = valid.map((f) => ({
       id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
       file: f,
       progress: 0,

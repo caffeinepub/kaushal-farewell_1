@@ -586,6 +586,10 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
 
   const handleViewFile = async (blobId: string) => {
     const url = await getDirectUrlFromBlobId(blobId);
+    if (!url) {
+      toast.error("Could not resolve file URL. Please try again.");
+      return;
+    }
     window.open(url, "_blank");
   };
 
@@ -593,6 +597,7 @@ export default function AdminPage({ onNavigateHome }: AdminPageProps) {
     setDownloadingIds((prev) => new Set(prev).add(blobId));
     try {
       const url = await getDirectUrlFromBlobId(blobId);
+      if (!url) throw new Error("Could not resolve file URL");
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.blob();

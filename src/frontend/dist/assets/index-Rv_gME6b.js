@@ -114,6 +114,26 @@ reactJsxRuntime_production.jsxs = jsxProd;
   jsxRuntime.exports = reactJsxRuntime_production;
 }
 var jsxRuntimeExports = jsxRuntime.exports;
+const IC_MAINNET_API = "https://icp-api.io";
+const _originalFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = function patchedFetch(input, init) {
+  let url;
+  if (typeof input === "string") {
+    url = input;
+  } else if (input instanceof URL) {
+    url = input.href;
+  } else {
+    url = input.url;
+  }
+  if (/https?:\/\/localhost:\d+\/api\//.test(url)) {
+    const rewritten = url.replace(
+      /https?:\/\/localhost:\d+\/api\//,
+      `${IC_MAINNET_API}/api/`
+    );
+    return _originalFetch(rewritten, init);
+  }
+  return _originalFetch(input, init);
+};
 let ExternalBlob$2 = class ExternalBlob {
   constructor(directURL, blob) {
     __publicField(this, "_blob");
@@ -42220,76 +42240,71 @@ function useActor() {
     isFetching: actorQuery.isFetching
   };
 }
-const MOTOKO_SENTINEL = "!caf!";
-let _configPromise = null;
+let cachedConfig = null;
 async function getStorageConfig() {
-  if (!_configPromise) {
-    _configPromise = loadConfig().then((config) => {
-      const url = config.storage_gateway_url;
-      const canister = config.backend_canister_id;
-      const project = config.project_id;
-      if (!url || !canister || !project) {
-        console.error("[blobUrl] Missing storage config values:", {
-          storage_gateway_url: url,
-          backend_canister_id: canister,
-          project_id: project
-        });
-      }
-      return {
-        storageGatewayUrl: url,
-        backendCanisterId: canister,
-        projectId: project
-      };
-    });
-  }
-  return _configPromise;
-}
-function extractHash(blobId) {
-  if (!blobId) return null;
-  if (blobId.startsWith(MOTOKO_SENTINEL)) {
-    const afterSentinel = blobId.slice(MOTOKO_SENTINEL.length);
-    if (afterSentinel.startsWith("sha256:")) {
-      return afterSentinel.slice("sha256:".length);
+  if (cachedConfig) return cachedConfig;
+  try {
+    const config = await loadConfig();
+    const gateway = config.storage_gateway_url;
+    const canisterId = config.backend_canister_id;
+    const projectId = config.project_id;
+    if (!gateway || !canisterId || !projectId) {
+      console.error("[blobUrl] Missing config values:", {
+        gateway,
+        canisterId,
+        projectId
+      });
+      return null;
     }
-    return afterSentinel;
+    cachedConfig = {
+      gateway: gateway.replace(/\/$/, ""),
+      canisterId,
+      projectId
+    };
+    return cachedConfig;
+  } catch (err) {
+    console.error("[blobUrl] Failed to load config:", err);
+    return null;
+  }
+}
+function extractSha256Hash(blobId) {
+  if (!blobId) return null;
+  if (blobId.startsWith("https://") || blobId.startsWith("http://")) {
+    return null;
+  }
+  if (blobId.startsWith("!caf!sha256:")) {
+    return blobId.slice("!caf!sha256:".length);
   }
   if (blobId.startsWith("sha256:")) {
     return blobId.slice("sha256:".length);
   }
-  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
-    return null;
+  if (/^[0-9a-f]{64}$/i.test(blobId)) {
+    return blobId;
   }
-  return blobId;
+  console.error("[blobUrl] Unrecognized blobId format:", blobId);
+  return null;
 }
 async function getDirectUrlFromBlobId(blobId) {
-  if (!blobId) return blobId;
-  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
+  if (!blobId) return null;
+  if (blobId.startsWith("https://") || blobId.startsWith("http://")) {
     return blobId;
   }
-  const hash = extractHash(blobId);
+  const hash = extractSha256Hash(blobId);
   if (!hash) {
-    console.warn(
-      "[blobUrl] Unrecognised blobId format, returning as-is:",
-      blobId
-    );
-    return blobId;
+    console.error("[blobUrl] Could not extract hash from blobId:", blobId);
+    return null;
   }
-  const { storageGatewayUrl, backendCanisterId, projectId } = await getStorageConfig();
-  if (!storageGatewayUrl || !backendCanisterId || !projectId) {
-    console.error("[blobUrl] Cannot build URL — storage config incomplete.", {
-      storageGatewayUrl,
-      backendCanisterId,
-      projectId
-    });
-    return blobId;
+  const config = await getStorageConfig();
+  if (!config) {
+    console.error("[blobUrl] No storage config available for blobId:", blobId);
+    return null;
   }
-  const base = storageGatewayUrl.endsWith("/") ? storageGatewayUrl.slice(0, -1) : storageGatewayUrl;
   const params = new URLSearchParams({
     blob_hash: `sha256:${hash}`,
-    owner_id: backendCanisterId,
-    project_id: projectId
+    owner_id: config.canisterId,
+    project_id: config.projectId
   });
-  return `${base}/v1/blob/?${params.toString()}`;
+  return `${config.gateway}/v1/blob/?${params.toString()}`;
 }
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"];
 const VIDEO_EXTS = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
@@ -42766,12 +42781,17 @@ function AdminPage({ onNavigateHome }) {
   }, [lockoutUntil]);
   const handleViewFile = async (blobId) => {
     const url = await getDirectUrlFromBlobId(blobId);
+    if (!url) {
+      ue.error("Could not resolve file URL. Please try again.");
+      return;
+    }
     window.open(url, "_blank");
   };
   const handleDownload = async (blobId, fileName) => {
     setDownloadingIds((prev) => new Set(prev).add(blobId));
     try {
       const url = await getDirectUrlFromBlobId(blobId);
+      if (!url) throw new Error("Could not resolve file URL");
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.blob();
@@ -44157,8 +44177,19 @@ function HomePage({ onNavigateAdmin }) {
   const fileInputRef = reactExports.useRef(null);
   const uploadMutation = useUploadMemory();
   const { actor, isFetching: isActorLoading } = useActor();
+  const MAX_FILE_SIZE = 40 * 1024 * 1024;
   const addFiles = reactExports.useCallback((newFiles) => {
-    const items = newFiles.map((f) => ({
+    const oversized = newFiles.filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      for (const f of oversized) {
+        ue.error(
+          `"${f.name}" is too large (${(f.size / (1024 * 1024)).toFixed(1)} MB). Max allowed size is 40 MB.`
+        );
+      }
+    }
+    const valid = newFiles.filter((f) => f.size <= MAX_FILE_SIZE);
+    if (valid.length === 0) return;
+    const items = valid.map((f) => ({
       id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
       file: f,
       progress: 0,
@@ -45105,26 +45136,6 @@ function App() {
 }
 BigInt.prototype.toJSON = function() {
   return this.toString();
-};
-const IC_MAINNET_API = "https://icp-api.io";
-const _originalFetch = globalThis.fetch.bind(globalThis);
-globalThis.fetch = function patchedFetch(input, init) {
-  let url;
-  if (typeof input === "string") {
-    url = input;
-  } else if (input instanceof URL) {
-    url = input.href;
-  } else {
-    url = input.url;
-  }
-  if (/https?:\/\/localhost:\d+\/api\//.test(url)) {
-    const rewritten = url.replace(
-      /https?:\/\/localhost:\d+\/api\//,
-      `${IC_MAINNET_API}/api/`
-    );
-    return _originalFetch(rewritten, init);
-  }
-  return _originalFetch(input, init);
 };
 const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")).render(

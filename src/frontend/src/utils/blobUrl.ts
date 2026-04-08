@@ -12,130 +12,127 @@ import { loadConfig } from "@caffeineai/core-infrastructure";
 // Backend stores blobId in several possible formats:
 //   1. "!caf!sha256:HASH"   — current standard format (Motoko deduplication sentinel)
 //   2. "sha256:HASH"        — some older entries stored without the !caf! prefix
-//   3. "HASH"               — rare legacy entries with just the raw hex hash
+//   3. "HASH" (64 hex)      — rare legacy entries with just the raw hex hash
 //   4. "https://..."        — very old entries that stored a full URL directly
 //
-// This function correctly handles ALL formats and ALWAYS returns the proper
-// query-param URL for GET access.
+// This function handles ALL formats and ALWAYS returns the proper query-param
+// URL for GET access, or null if the config is unavailable.
+// It NEVER returns a raw blobId as a URL — that would cause the GET error.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MOTOKO_SENTINEL = "!caf!";
-
 interface StorageConfig {
-  storageGatewayUrl: string;
-  backendCanisterId: string;
+  gateway: string;
+  canisterId: string;
   projectId: string;
 }
 
-let _configPromise: Promise<StorageConfig> | null = null;
+let cachedConfig: StorageConfig | null = null;
 
-async function getStorageConfig(): Promise<StorageConfig> {
-  if (!_configPromise) {
-    _configPromise = loadConfig().then((config) => {
-      const url = config.storage_gateway_url;
-      const canister = config.backend_canister_id;
-      const project = config.project_id;
-
-      if (!url || !canister || !project) {
-        console.error("[blobUrl] Missing storage config values:", {
-          storage_gateway_url: url,
-          backend_canister_id: canister,
-          project_id: project,
-        });
-      }
-
-      return {
-        storageGatewayUrl: url,
-        backendCanisterId: canister,
-        projectId: project,
-      };
-    });
+async function getStorageConfig(): Promise<StorageConfig | null> {
+  if (cachedConfig) return cachedConfig;
+  try {
+    const config = await loadConfig();
+    const gateway = config.storage_gateway_url as string | undefined;
+    const canisterId = config.backend_canister_id as string | undefined;
+    const projectId = config.project_id as string | undefined;
+    if (!gateway || !canisterId || !projectId) {
+      console.error("[blobUrl] Missing config values:", {
+        gateway,
+        canisterId,
+        projectId,
+      });
+      return null;
+    }
+    cachedConfig = {
+      gateway: gateway.replace(/\/$/, ""),
+      canisterId,
+      projectId,
+    };
+    return cachedConfig;
+  } catch (err) {
+    console.error("[blobUrl] Failed to load config:", err);
+    return null;
   }
-  return _configPromise;
 }
 
 /**
- * Extracts the raw SHA-256 hex hash from a blobId in any supported format.
- * Returns null if the blobId appears to be a legacy full URL.
+ * Extracts the raw SHA-256 hex hash from any blobId format.
+ *
+ * Returns:
+ *   - The hex hash string for formats 1–3
+ *   - null for legacy full URLs (https://...) — caller should use them as-is
+ *   - null for unrecognised formats — caller should NOT use the raw string as a URL
  */
-function extractHash(blobId: string): string | null {
+function extractSha256Hash(blobId: string): string | null {
   if (!blobId) return null;
 
-  // Format 1: "!caf!sha256:HASH" — current standard
-  if (blobId.startsWith(MOTOKO_SENTINEL)) {
-    const afterSentinel = blobId.slice(MOTOKO_SENTINEL.length);
-    // afterSentinel is "sha256:HASH"
-    if (afterSentinel.startsWith("sha256:")) {
-      return afterSentinel.slice("sha256:".length);
-    }
-    // Unexpected — return as-is after sentinel
-    return afterSentinel;
+  // Legacy full URL — handled separately by the caller
+  if (blobId.startsWith("https://") || blobId.startsWith("http://")) {
+    return null;
   }
 
-  // Format 2: "sha256:HASH" — no sentinel prefix
+  // Current format: !caf!sha256:HASH
+  if (blobId.startsWith("!caf!sha256:")) {
+    return blobId.slice("!caf!sha256:".length);
+  }
+
+  // Older format without sentinel: sha256:HASH
   if (blobId.startsWith("sha256:")) {
     return blobId.slice("sha256:".length);
   }
 
-  // Format 3: Already a full URL (legacy) — caller should use as-is
-  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
-    return null;
+  // Raw hex hash (exactly 64 lowercase hex chars)
+  if (/^[0-9a-f]{64}$/i.test(blobId)) {
+    return blobId;
   }
 
-  // Format 4: Raw hex hash with no prefix
-  return blobId;
+  // Completely unknown format — log and return null so caller returns null
+  console.error("[blobUrl] Unrecognized blobId format:", blobId);
+  return null;
 }
 
 /**
- * Converts a blobId stored in the backend into a direct HTTP URL that can be
- * used in <img src>, fetch(), etc.
+ * Converts any blobId stored in the backend into the proper storage gateway
+ * GET URL that can be used in <img src>, fetch(), window.open(), etc.
  *
  * ALWAYS returns the correct query-param URL format:
  *   {storage_gateway_url}/v1/blob/?blob_hash=sha256:HASH&owner_id=CANISTER_ID&project_id=PROJECT_ID
  *
- * This is the ONLY format the storage gateway supports for GET requests.
- * The raw path format (/sha256:HASH) only works for PUT (uploads), not GET.
+ * Returns null if:
+ *   - The blobId is empty / unrecognized
+ *   - The storage config (gateway URL, canister ID, project ID) cannot be loaded
+ *
+ * NEVER returns a raw "sha256:..." or "!caf!..." string as a URL — doing so
+ * causes "Method GET not supported" errors from the storage gateway.
  */
-export async function getDirectUrlFromBlobId(blobId: string): Promise<string> {
-  if (!blobId) return blobId;
+export async function getDirectUrlFromBlobId(
+  blobId: string,
+): Promise<string | null> {
+  if (!blobId) return null;
 
-  // Check if it's a legacy full URL — return as-is
-  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
+  // Legacy full URL — already valid for GET
+  if (blobId.startsWith("https://") || blobId.startsWith("http://")) {
     return blobId;
   }
 
-  const hash = extractHash(blobId);
-
+  const hash = extractSha256Hash(blobId);
   if (!hash) {
-    // Fallback for truly unrecognised formats
-    console.warn(
-      "[blobUrl] Unrecognised blobId format, returning as-is:",
-      blobId,
-    );
-    return blobId;
+    console.error("[blobUrl] Could not extract hash from blobId:", blobId);
+    return null;
   }
 
-  const { storageGatewayUrl, backendCanisterId, projectId } =
-    await getStorageConfig();
-
-  if (!storageGatewayUrl || !backendCanisterId || !projectId) {
-    console.error("[blobUrl] Cannot build URL — storage config incomplete.", {
-      storageGatewayUrl,
-      backendCanisterId,
-      projectId,
-    });
-    return blobId;
+  const config = await getStorageConfig();
+  if (!config) {
+    console.error("[blobUrl] No storage config available for blobId:", blobId);
+    return null;
   }
 
-  const base = storageGatewayUrl.endsWith("/")
-    ? storageGatewayUrl.slice(0, -1)
-    : storageGatewayUrl;
-
+  // Build the query-param URL — the ONLY format that supports GET
   const params = new URLSearchParams({
     blob_hash: `sha256:${hash}`,
-    owner_id: backendCanisterId,
-    project_id: projectId,
+    owner_id: config.canisterId,
+    project_id: config.projectId,
   });
 
-  return `${base}/v1/blob/?${params.toString()}`;
+  return `${config.gateway}/v1/blob/?${params.toString()}`;
 }
