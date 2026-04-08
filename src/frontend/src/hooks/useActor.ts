@@ -24,50 +24,6 @@ export interface BackendActor {
   getStats(sessionToken: string): Promise<[bigint, bigint]>;
 }
 
-// The IC mainnet API endpoint — supports /api/v3/canister/{id}/call (sync calls)
-// which is required by StorageClient.getCertificate() to get the IC consensus
-// certificate for upload authorization.
-const IC_MAINNET_API = "https://icp-api.io";
-
-/**
- * Creates a patched fetch function that rewrites IC API calls from the
- * Caffeine localhost:8081 proxy to icp-api.io directly.
- *
- * Root cause of "Expected v3 response body" error:
- * - The Caffeine platform sets env.json backend_host = "http://localhost:8081"
- * - StorageClient calls agent.call() → /api/v3/canister/{id}/call on localhost:8081
- * - The localhost proxy doesn't support v3 (returns 404) → agent falls back to v2
- * - v2 response body is null (202 accepted) → isV3ResponseBody(null) = false → error
- *
- * Fix: Route /api/v3/ and /api/v2/ IC calls through icp-api.io which DOES support
- * the v3 sync endpoint and returns the certificate in the response body.
- */
-function createIcApiFetch(): typeof globalThis.fetch {
-  const baseFetch = globalThis.fetch.bind(globalThis);
-  return function icApiFetch(
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ): Promise<Response> {
-    let url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : (input as Request).url;
-
-    // Rewrite localhost:8081 IC API calls to go directly to icp-api.io
-    if (url.includes("localhost:8081/api/")) {
-      url = url.replace(
-        /https?:\/\/localhost:\d+\/api\//,
-        `${IC_MAINNET_API}/api/`,
-      );
-      return baseFetch(url, init);
-    }
-
-    return baseFetch(input, init);
-  };
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CreateActorFn = (
   canisterId: string,
@@ -90,14 +46,18 @@ const createActorFn: CreateActorFn = (
   ) as unknown as BackendActor;
 
 async function buildActor(identity?: Identity): Promise<BackendActor> {
+  // NOTE: globalThis.fetch is already patched in main.tsx (before React renders)
+  // to redirect localhost:8081/api/* → icp-api.io/api/*. That patch covers ALL
+  // libraries including the StorageClient's internally-created HttpAgent.
+  //
+  // We also pass it explicitly here as a belt-and-suspenders measure, in case
+  // createActorWithConfig creates an HttpAgent that captures fetch at
+  // construction time rather than using globalThis.fetch dynamically.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (createActorWithConfig as any)(createActorFn, {
     agentOptions: {
       ...(identity ? { identity } : {}),
-      // Patch fetch so that agent.call() for StorageClient.getCertificate()
-      // goes to icp-api.io instead of localhost:8081, enabling v3 sync calls
-      // which return the IC certificate needed for storage uploads.
-      fetch: createIcApiFetch(),
+      fetch: globalThis.fetch,
     },
   });
 }

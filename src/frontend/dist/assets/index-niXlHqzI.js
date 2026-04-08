@@ -11225,14 +11225,14 @@ async function createActorWithConfig(createActor2, options) {
     processError
   };
   const storageClient = new StorageClient(config.bucket_name, config.storage_gateway_url, config.backend_canister_id, config.project_id, agent);
-  const MOTOKO_DEDUPLICATION_SENTINEL2 = "!caf!";
+  const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
   const uploadFile = async (file) => {
     const { hash } = await storageClient.putFile(await file.getBytes(), file.onProgress);
-    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL2 + hash);
+    return new TextEncoder().encode(MOTOKO_DEDUPLICATION_SENTINEL + hash);
   };
   const downloadFile = async (bytes) => {
     const hashWithPrefix = new TextDecoder().decode(new Uint8Array(bytes));
-    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL2.length);
+    const hash = hashWithPrefix.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
     const url = await storageClient.getDirectURL(hash);
     return ExternalBlob$2.fromURL(url);
   };
@@ -42181,21 +42181,6 @@ function createActor(canisterId, _uploadFile, _downloadFile, options = {}) {
   });
   return new Backend(actor, _uploadFile, _downloadFile, options.processError);
 }
-const IC_MAINNET_API = "https://icp-api.io";
-function createIcApiFetch() {
-  const baseFetch = globalThis.fetch.bind(globalThis);
-  return function icApiFetch(input, init) {
-    let url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    if (url.includes("localhost:8081/api/")) {
-      url = url.replace(
-        /https?:\/\/localhost:\d+\/api\//,
-        `${IC_MAINNET_API}/api/`
-      );
-      return baseFetch(url, init);
-    }
-    return baseFetch(input, init);
-  };
-}
 const createActorFn = (canisterId, uploadFile, downloadFile, options) => createActor(
   canisterId,
   uploadFile,
@@ -42206,10 +42191,7 @@ async function buildActor(identity) {
   return createActorWithConfig(createActorFn, {
     agentOptions: {
       ...identity ? { identity } : {},
-      // Patch fetch so that agent.call() for StorageClient.getCertificate()
-      // goes to icp-api.io instead of localhost:8081, enabling v3 sync calls
-      // which return the IC certificate needed for storage uploads.
-      fetch: createIcApiFetch()
+      fetch: globalThis.fetch
     }
   });
 }
@@ -42238,28 +42220,72 @@ function useActor() {
     isFetching: actorQuery.isFetching
   };
 }
-const MOTOKO_DEDUPLICATION_SENTINEL = "!caf!";
+const MOTOKO_SENTINEL = "!caf!";
 let _configPromise = null;
 async function getStorageConfig() {
   if (!_configPromise) {
-    _configPromise = loadConfig().then((config) => ({
-      storageGatewayUrl: config.storage_gateway_url,
-      backendCanisterId: config.backend_canister_id,
-      projectId: config.project_id
-    }));
+    _configPromise = loadConfig().then((config) => {
+      const url = config.storage_gateway_url;
+      const canister = config.backend_canister_id;
+      const project = config.project_id;
+      if (!url || !canister || !project) {
+        console.error("[blobUrl] Missing storage config values:", {
+          storage_gateway_url: url,
+          backend_canister_id: canister,
+          project_id: project
+        });
+      }
+      return {
+        storageGatewayUrl: url,
+        backendCanisterId: canister,
+        projectId: project
+      };
+    });
   }
   return _configPromise;
 }
+function extractHash(blobId) {
+  if (!blobId) return null;
+  if (blobId.startsWith(MOTOKO_SENTINEL)) {
+    const afterSentinel = blobId.slice(MOTOKO_SENTINEL.length);
+    if (afterSentinel.startsWith("sha256:")) {
+      return afterSentinel.slice("sha256:".length);
+    }
+    return afterSentinel;
+  }
+  if (blobId.startsWith("sha256:")) {
+    return blobId.slice("sha256:".length);
+  }
+  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
+    return null;
+  }
+  return blobId;
+}
 async function getDirectUrlFromBlobId(blobId) {
   if (!blobId) return blobId;
-  if (!blobId.startsWith(MOTOKO_DEDUPLICATION_SENTINEL)) {
+  if (blobId.startsWith("http://") || blobId.startsWith("https://")) {
     return blobId;
   }
-  const hash = blobId.substring(MOTOKO_DEDUPLICATION_SENTINEL.length);
+  const hash = extractHash(blobId);
+  if (!hash) {
+    console.warn(
+      "[blobUrl] Unrecognised blobId format, returning as-is:",
+      blobId
+    );
+    return blobId;
+  }
   const { storageGatewayUrl, backendCanisterId, projectId } = await getStorageConfig();
+  if (!storageGatewayUrl || !backendCanisterId || !projectId) {
+    console.error("[blobUrl] Cannot build URL — storage config incomplete.", {
+      storageGatewayUrl,
+      backendCanisterId,
+      projectId
+    });
+    return blobId;
+  }
   const base = storageGatewayUrl.endsWith("/") ? storageGatewayUrl.slice(0, -1) : storageGatewayUrl;
   const params = new URLSearchParams({
-    blob_hash: hash,
+    blob_hash: `sha256:${hash}`,
     owner_id: backendCanisterId,
     project_id: projectId
   });
@@ -45079,6 +45105,26 @@ function App() {
 }
 BigInt.prototype.toJSON = function() {
   return this.toString();
+};
+const IC_MAINNET_API = "https://icp-api.io";
+const _originalFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = function patchedFetch(input, init) {
+  let url;
+  if (typeof input === "string") {
+    url = input;
+  } else if (input instanceof URL) {
+    url = input.href;
+  } else {
+    url = input.url;
+  }
+  if (/https?:\/\/localhost:\d+\/api\//.test(url)) {
+    const rewritten = url.replace(
+      /https?:\/\/localhost:\d+\/api\//,
+      `${IC_MAINNET_API}/api/`
+    );
+    return _originalFetch(rewritten, init);
+  }
+  return _originalFetch(input, init);
 };
 const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")).render(
